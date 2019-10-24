@@ -100,13 +100,13 @@ dnl
 dnl Project base installation folder
 dnl
 
-AC_ARG_VAR(DESTDIR, Set base folder for installation (/srv/vscp) )
-if test "${DESTDIR+set}" = set; then
-  echo "variable \$DESTDIR is set to: $DESTDIR"
-else
-  DESTDIR="/srv/vscp/"
-  echo "variable \$DESTDIR is set to: $DESTDIR"
-fi
+dnl AC_ARG_VAR(DESTDIR, Set base folder for installation (/srv/vscp) )
+dnl if test "${DESTDIR+set}" = set; then
+dnl   echo "variable \$DESTDIR is set to: $DESTDIR"
+dnl else
+dnl   DESTDIR="/srv/vscp/"
+dnl   echo "variable \$DESTDIR is set to: $DESTDIR"
+dnl fi
 
 dnl
 dnl Project Sub directories
@@ -136,7 +136,7 @@ echo   "           VSCP configuration"
 echo   "--------------------------------------------"
 echo   "Version          : ${PACKAGE_VERSION} (major_version.minor_version.release_version.build_version)"
 echo   "System           : `uname -a` "
-echo   "VSCP install dir : ${DESTDIR}"
+echo   "DESTDIR          : ${DESTDIR}"
 
 dnl echo   "${ax_enable_debug}"
 if test "${ax_enable_debug}" = "yes"

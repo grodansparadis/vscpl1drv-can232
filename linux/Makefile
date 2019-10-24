@@ -9,10 +9,15 @@ RELEASE_VERSION=0
 BUILD_VERSION=0
 PACKAGE_VERSION=1.1.0
 
+# Library version
+LIB_MAJOR_VERSION = 1
+LIB_MINOR_VERSION = 1
+LIB_RELEASE_VERSION = 0
+
 # STATIC = yes if a static build is requested.
 STATIC=no
-VSCP_PROJ_BASE_DIR=/srv/vscp/
-DESTDIR=/srv/vscp/
+VSCP_PROJ_BASE_DIR=
+DESTDIR=
 
 prefix = /usr/local
 exec_prefix = ${prefix}
@@ -45,6 +50,8 @@ includedir = ${prefix}/include
 DLLPREFIX = lib
 LIB_SONAME = "vscpl1drv-can4vscp"
 
+LIB_PLUS_VER = "vscpl1drv-can4vscp.so.$(LIB_MAJOR_VERSION).$(LIB_MINOR_VERSION).$(LIB_RELEASE_VERSION)"
+LIB_SONAME = "vscpl1drv-can4vscp.so.$(LIB_MAJOR_VERSION)"
 
 ### Variables: ###
 
@@ -55,17 +62,14 @@ CAN232DRV_OBJECTS = vscpl1drv-can232.o\
 
 ### Targets: ###
 
-all: vscpl1drv-can232.so libvscpl1drv-can232.a
-
-# static lib
-libvscpl1drv-can232.a:	vscpl1drv-can232.so
-	ar rcs libvscpl1drv-can232.a $(CAN4VSCP_OBJECTS)
+all: $(LIB_PLUS_VER) libvscpl1drv-can232.a
 
 test:  test.o $(PROJOBJS)
 	$(CXX) -o $@ test.o $(PROJOBJS) $(LDFLAGS) -L$(LIBDIRNAME) -lm -lpthread -ldl  $(EXTRALIBS)
 
-vscpl1drv-can232.so: $(CAN232DRV_OBJECTS)
-	$(CXX) -o $@ $(CAN232DRV_OBJECTS) $(DLFLAGS) -L$(LIBDIRNAME) -lm -lpthread -ldl  $(EXTRALIBS)
+$(LIB_PLUS_VER): $(CAN232DRV_OBJECTS)
+	$(CXX) -Wl,-soname,$(LIB_SONAME) -o $@ $(CAN232DRV_OBJECTS) $(DLFLAGS) -L$(LIBDIRNAME) -lm -lpthread -ldl  $(EXTRALIBS)
+	ar rcs libvscpl1drv-can232.a $(VSCPHELPER_OBJECTS)
 
 can232obj.o: can232obj.cpp can232obj.h
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c can232obj.cpp -o $@
@@ -83,12 +87,22 @@ man: ../man/vscpl1drv-can232.1.md
 	pandoc -s -t man ../man/vscpl1drv-can232.1.md -o ../man/vscpl1drv-can232.1
 
 install: all
-	mkdir -p $(VSCP_PROJ_BASE_DIR)/drivers/level1
-	$(INSTALL_DIR) $(VSCP_PROJ_BASE_DIR)/drivers/level1
-	$(INSTALL_PROGRAM) vscpl1drv-can232.so $(VSCP_PROJ_BASE_DIR)/drivers/level1
+	$(INSTALL_DIR) $(DESTDIR)$(libdir)
+	$(STRIP) $(LIB_PLUS_VER)
+	$(INSTALL_PROGRAM) $(LIB_PLUS_VER) $(DESTDIR)$(libdir)
+	ln -fs $(libdir)/$(LIB_PLUS_VER) $(DESTDIR)$(libdir)/vscpl1drv-can232.so
+	ln -fs $(libdir)/$(LIB_PLUS_VER) $(DESTDIR)$(libdir)/vscpl1drv-can232.so.$(LIB_MAJOR_VERSION)
+	ln -fs $(libdir)/$(LIB_PLUS_VER) $(DESTDIR)$(libdir)/vscpl1drv-can232.so.$(LIB_MAJOR_VERSION).$(LIB_MINOR_VERSION)
+	$(INSTALL_PROGRAM) libvscpl1drv-can232.a $(DESTDIR)$(libdir)
+	pandoc -s -t man ../man/vscpl1drv-can232.1.md -o ../man/vscpl1drv-can232.1
+	$(INSTALL_PROGRAM) ../man/vscpl1drv-can232.1 /usr/share/man/man1/
+	mandb
 
 uninstall:
-	rm -rf $(VSCP_PROJ_BASE_DIR)/drivers/level2/vscpl1drv-can232.so
+	rm -f  $(DESTDIR)$(libdir)/libvscpl1drv-can232.a
+	rm -f  $(DESTDIR)$(libdir)/$(LIB_PLUS_VER)
+	rm -f  $(DESTDIR)$(libdir)/vscpl1drv-can232.so.$(LIB_MAJOR_VERSION)
+	rm -f  $(DESTDIR)$(libdir)/vscpl1drv-can232.so.$(LIB_MAJOR_VERSION).$(LIB_MINOR_VERSION)
 
 install-strip: install
 

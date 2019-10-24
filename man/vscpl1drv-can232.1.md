@@ -1,10 +1,10 @@
-% VSCPL1DRV-LOGGER(1) VSCP Level I Logger Driver
+% VSCPL1DRV-CAN232(1) VSCP Level I CAN232 (slcan) Driver
 % Åke Hedman, Grodans Paradis AB
 % October 7, 2019
 
 # NAME
 
-vscpl1drv-can232 - VSCP Level I CAN4VSCP Serial Driver
+vscpl1drv-can232 - Lawicel CAN232 (slcan) Level I Driver
 
 # SYNOPSIS
 
@@ -12,78 +12,55 @@ vscpl1drv-can232
 
 # DESCRIPTION
 
-VSCP level I driver (CANAL driver) for hardware devices that export there inner functionality with the VSCP standard serial protocol (CAN4VSCP). A typical such device is the [Frankfurt RS-232 module](http://www.grodansparadis.com/frankfurt/rs232/frankfurt-rs232.html) from Grodans Paradis.
+This driver interface is for the can232 adapter from Lawicel (or other slcan drivers). This is a low cost CAN adapter that connects to one of the serial communication ports on a computer. The driver can handle the adapter in both polled and non polled mode, which handled transparently to the user. It is recommended however that the following settings are made before real life use.
 
-Several drivers can be loaded allowing simultaneous communication with several devices on different busses.
-
-Filters/masks can be used to limit/select sub amount of events.
-
-As the VSCP serial protocol is very generic this free serial protocol may also be the protocol to use for your own hardware which have some sort of serial port available.
+* Set the baud rate for the device to 115200. You do this with the U1 command. This is the default baud rate used by this driver.
+* Set auto poll mode by issuing the X1 command.
+* Enable the time stamp by issuing the Z1 command.
 
 ## Configuration string
 
-### Windows
+The driver string has the following format (note that all values can be entered in either decimal or hexadecimal form (for hex precede with 0x).
 
-> port[;nBaud]
+> comport;baudrate;mask;filter;bus-speed[;btr0;btr1]
 
-#### port
-The first parameter is the serial port to use (COM1, COM2 and so on). This parameter is mandatory.
+####  comport
+The serial communication port to use. For windows use 1,2,3... for Linux use /dev/ttyS0, /dev/ttyUSB1 etc.
 
-#### nBaud
-The second parameter is the serial baudrate and defaults to 5 which is the cod6e for 115200 Baud.
+#### baudrate
+A valid baud rate for the **serial interface** ( for example. 9600 ).
 
-### Linux
+#### mask
+The mask for the adapter. Read the Lawicel CAN232 manual on how to set this. It is not the same as for CANAL/VSCP.
 
-> port[;nBaud]
+#### filter
+The filter for the adapter. Read the Lawicel CAN232 manual on how to set this. It is not the same as for CANAL.
 
-#### port
-The first parameter is the serial port to use (*/dev/ttyS0*, */dev/ttyS1*, */dev/ttyUSB0*, */dev/ttyUSB1* and so on). This parameter is mandatory.
+#### bus-speed
+is the speed or the **CAN interface**. Valid values are
 
-#### nBaud
-The second parameter is the serial baudrate and defaults to 5 which is the code for 115200 Baud.
+| Setting | Bus-speed |
+| :-----: | :---------: |
+| 10 | 10Kbps |
+| 20 | 20Kbps |
+| 50 | 50Kbps |
+| 100 |  100Kbps |
+| 125 | 125Kbps |
+| 250 | 250Kbps |
+| 500 | 500Kbps |
+| 800 | 800Kbps |
+| 1000 | 1Mbps |
 
-| Baudrate | Code | Error  | Windows | Linux |
- | :--------: | :----: | :-----:  | :-------: | :-----: |
- | 115200   | 0    | -1.36% | yes     | yes   |
- | 128000   | 1    | -2.34% | yes     | no    |
- | 230400   | 2    | -1.36% | no      | yes   |
- | 256000   | 3    | -2.34% | yes     | no    |
- | 460800   | 4    | 8.51%  | no      | no    |
- | 500000   | 5    | 0%     | yes     | yes   |
- | 625000   | 6    | 0%     | bad     | no    |
- | 921600   | 7    | -9.58% | no      | bad   |
- | 1000000  | 8    | 16.67% | no      | bad   |
- | 9600     | 9    | 0.16%  | yes     | yes   |
- | 19200    | 10   | 0,16%  | yes     | yes   |
- | 38400    | 11   | 0,16%  | yes     | yes   |
- | 57600    | 12   | 0.94%  | yes     | yes   |
+#### btr0/btr1 (Optional.)
+Instead of setting a bus-speed you can set the SJA1000 BTR0/BTR1 values directly. If both are set the bus_speed parameter is ignored.
 
-Tests on Windows and Linux has been done on a Windows 10 machine and on a Ubuntu machine with the USB serial adapter that ship with [Frankfurt RS-232](http://www.grodansparadis.com/frankfurt/rs232/frankfurt-rs232.html).
+This link can be a help for data https://www.port.de/engl/canprod/sv_req_form.html
 
-Typical settings for VSCP daemon config
-
-```xml
-    <driver enable="true" >
-        <name>can4vscp</name>
-        <config>/dev/ttyUSB0</config>
-        <path>/usr/local/lib/vscpl1_can4vscpdrv.so</path>
-        <flags>0</flags>
-        <guid>00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00</guid>
-    </driver>
-```
+If no device string is given COM1/ttyS0 will be used. Baud rate will be set to 115200 baud and the filter/mask to fully open. The CAN bit rate will be 500Kbps.
 
 ## Flags
 
- | Bits | Usage |
- | ----  | ----- |
- | Bit 0,1  | **Open Mode** <br> **0** - normal <br> **1** - Listen mode <br> **2** - Loopback mode <br> **3** - Reserved |
- | Bit 2    | If set the driver will not switch to VSCP mode. That is it must be in VSCP mode. Open will be faster. |
- | Bit 3    | If set the driver will wait for an ACK from the physical device for every sent frame. This will slow down sending but make transmission it very secure. |
- | Bit 4    | Enable timestamp. The timestamp will be written by the hardware instead of the driver. |
- | Bit 5    | Enable hardware handshake.  |
- | Bit 6 | Enable strict mode. Driver will terminate on all errors.  |
- | Bit 7-30 | Reserved.  |
- | Bit 31 | Enable debug messages to LOG_DEBUG, syslog.  |
+ Not used. Set to zero.
 
 ## Status return
 
@@ -110,9 +87,27 @@ The CanalGetStatus call returns the status structure with the channel_status mem
  | Bit 30   | Bus Warning status. |
  | Bit 31   | Bus off status |
 
-## Serial Protocol
+## Example configurations
 
-You can find the description of the VSCP serial protocol in the [VSCP specification](http://www.vscp.org/docs/vscpspec/doku.php?id=physical_level_lower_level_protocols#vscp_over_a_serial_channel_rs-232).
+> 5;115200;0;0;1000
+
+Uses COM5 at 115200 with filters/masks open to receive all messages and with 1Mbps CAN bit rate.
+
+> /dev/ttyUSB1;57600;0;0;0;0x09;0x1C
+
+Uses serial USB adapter 1 at 57600 baud with filters/masks open to receive all messages and with a CAN bit-rate set to 50Kbps using btr0/btr1
+
+### Typical settings for VSCP daemon config
+
+```xml
+    <driver enable="true" >
+        <name>can232</name>
+        <config>/dev/ttyUSB1;57600;0;0;0;0x09;0x1C</config>
+        <path>/usr/lib/vscpl1drv_can232.so</path>
+        <flags>0</flags>
+        <guid>00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00</guid>
+    </driver>
+```
 
 ---
 
