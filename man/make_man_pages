@@ -1,0 +1,6 @@
+#!/bin/bash
+
+pandoc -s -t man vscpl1drv-can232.1.md -o vscpl1drv-can232.1
+sudo cp vscpl1drv-can232.1 /usr/share/man/man1/
+
+mandb
