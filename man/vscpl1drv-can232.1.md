@@ -87,24 +87,28 @@ The CanalGetStatus call returns the status structure with the channel_status mem
 
 ## Example configurations
 
-> 5;115200;0;0;1000
+```
+5;115200;0;0;1000
+```
 
 Uses COM5 at 115200 with filters/masks open to receive all messages and with 1Mbps CAN bit rate.
 
-> /dev/ttyUSB1;57600;0;0;0;0x09;0x1C
+```
+/dev/ttyUSB1;57600;0;0;0;0x09;0x1C
+```
 
 Uses serial USB adapter 1 at 57600 baud with filters/masks open to receive all messages and with a CAN bit-rate set to 50Kbps using btr0/btr1
 
 ### Typical settings for VSCP daemon config
 
 ```xml
-    <driver enable="true" >
-        <name>can232</name>
-        <config>/dev/ttyUSB1;57600;0;0;0;0x09;0x1C</config>
-        <path>/usr/lib/vscpl1drv_can232.so</path>
-        <flags>0</flags>
-        <guid>00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00</guid>
-    </driver>
+<driver enable="true" >
+    <name>can232</name>
+    <config>/dev/ttyUSB1;57600;0;0;0;0x09;0x1C</config>
+    <path>/usr/lib/vscpl1drv_can232.so</path>
+    <flags>0</flags>
+    <guid>00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00</guid>
+</driver>
 ```
 
 ---
