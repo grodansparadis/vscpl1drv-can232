@@ -7,7 +7,7 @@
 // 
 // This file is part of the VSCP (http://www.vscp.org) 
 //
-// Copyright (C) 2000-2019 Ake Hedman,
+// Copyright (C) 2000-2020 Ake Hedman,
 // Grodans Paradis AB, <akhe@grodansparadis.com>
 // 
 // This file is distributed in the hope that it will be useful,
@@ -59,9 +59,9 @@ CCan232drvdllApp::CCan232drvdllApp ()
   m_instanceCounter = 0;
   pthread_mutex_init (&m_objMutex, NULL);
   // Init the driver array
-  for (int i = 0; i < CANAL_LOGGER_DRIVER_MAX_OPEN; i++)
+  for (int i = 0; i < CANAL_CAN232_DRIVER_MAX_OPEN; i++)
     {
-      m_logArray[ i ] = NULL;
+      m_objArray[ i ] = NULL;
     }
 
   UNLOCK_MUTEX (m_objMutex);
@@ -71,18 +71,18 @@ CCan232drvdllApp::~CCan232drvdllApp ()
 {
   LOCK_MUTEX (m_objMutex);
 
-  for (int i = 0; i < CANAL_LOGGER_DRIVER_MAX_OPEN; i++)
+  for (int i = 0; i < CANAL_CAN232_DRIVER_MAX_OPEN; i++)
     {
 
-      if (NULL != m_logArray[ i ])
+      if (NULL != m_objArray[ i ])
         {
           CCAN232Obj *pCAN232Obj = getDriverObject (i);
 
           if (NULL != pCAN232Obj)
             {
               pCAN232Obj->close ();
-              delete m_logArray[ i ];
-              m_logArray[ i ] = NULL;
+              delete m_objArray[ i ];
+              m_objArray[ i ] = NULL;
             }
         }
     }
@@ -111,21 +111,20 @@ CCan232drvdllApp theApp;
 // addDriverObject
 //
 
-//long CCan232drvdllApp::addDriverObject( CLog *plog )
 
 long
-CCan232drvdllApp::addDriverObject (CCAN232Obj *plog)
+CCan232drvdllApp::addDriverObject (CCAN232Obj *pobj)
 {
   long h = 0;
 
   LOCK_MUTEX (m_objMutex);
-  for (int i = 0; i < CANAL_LOGGER_DRIVER_MAX_OPEN; i++)
+  for (int i = 0; i < CANAL_CAN232_DRIVER_MAX_OPEN; i++)
     {
 
-      if (NULL == m_logArray[ i ])
+      if (NULL == m_objArray[ i ])
         {
 
-          m_logArray[ i ] = plog;
+          m_objArray[ i ] = pobj;
           h = i + 1681;
           break;
         }
@@ -140,8 +139,6 @@ CCan232drvdllApp::addDriverObject (CCAN232Obj *plog)
 // getDriverObject
 //
 
-//CLog * CCan232drvdllApp::getDriverObject( long h )
-
 CCAN232Obj *
 CCan232drvdllApp::getDriverObject (long h)
 {
@@ -149,8 +146,8 @@ CCan232drvdllApp::getDriverObject (long h)
 
   // Check if valid handle
   if (idx < 0) return NULL;
-  if (idx >= CANAL_LOGGER_DRIVER_MAX_OPEN) return NULL;
-  return m_logArray[ idx ];
+  if (idx >= CANAL_CAN232_DRIVER_MAX_OPEN) return NULL;
+  return m_objArray[ idx ];
 }
 
 
@@ -165,11 +162,11 @@ CCan232drvdllApp::removeDriverObject (long h)
 
   // Check if valid handle
   if (idx < 0) return;
-  if (idx >= CANAL_LOGGER_DRIVER_MAX_OPEN) return;
+  if (idx >= CANAL_CAN232_DRIVER_MAX_OPEN) return;
 
   LOCK_MUTEX (m_objMutex);
-  if (NULL != m_logArray[ idx ]) delete m_logArray[ idx ];
-  m_logArray[ idx ] = NULL;
+  if (NULL != m_objArray[ idx ]) delete m_objArray[ idx ];
+  m_objArray[ idx ] = NULL;
   UNLOCK_MUTEX (m_objMutex);
 }
 
@@ -223,15 +220,12 @@ CanalOpen (const char *pDevice, unsigned long flags)
 extern "C" int
 CanalClose (long handle)
 {
-  int rv = 0;
+  CCAN232Obj *pobj = theApp.getDriverObject (handle);
+  if (NULL == pobj) return 0;
 
-  CCAN232Obj *pLog = theApp.getDriverObject (handle);
-  if (NULL == pLog) return 0;
-
-  pLog->close ();
+  pobj->close ();
   theApp.removeDriverObject (handle);
 
-  rv = 1;
   return CANAL_ERROR_SUCCESS;
 }
 

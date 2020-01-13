@@ -8,7 +8,7 @@
 // 
 // This file is part of the VSCP (http://www.vscp.org) 
 //
-// Copyright (C) 2000-2019 Ake Hedman,
+// Copyright (C) 2000-2020 Ake Hedman,
 // Ake Hedman, Grodans Paradis AB, <akhe@grodansparadis.com>
 // 
 // This file is distributed in the hope that it will be useful,
@@ -34,7 +34,7 @@
 #define CANAL_DLL_VENDOR "ice@geomi.org, BG, http://geomi.org"
 
 // Max number of open connections
-#define CANAL_LOGGER_DRIVER_MAX_OPEN	256
+#define CANAL_CAN232_DRIVER_MAX_OPEN	256
 
 /////////////////////////////////////////////////////////////////////////////
 // CCan232drvdllApp
@@ -80,7 +80,7 @@ public:
 		The log file object
 		This is the array with driver objects (max 256 objects
 	*/
-	CCAN232Obj *m_logArray[ CANAL_LOGGER_DRIVER_MAX_OPEN ];
+	CCAN232Obj *m_objArray[ CANAL_CAN232_DRIVER_MAX_OPEN ];
 	
 	/// Mutex for open/close
 	pthread_mutex_t m_objMutex;

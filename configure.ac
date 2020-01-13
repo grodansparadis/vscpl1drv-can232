@@ -9,7 +9,7 @@ AC_INIT( [vscpl1drv-can232], [package_version], [akhe@grodansparadis.com])
 AC_CONFIG_MACRO_DIR(m4)
 
 AC_PREREQ(2.57)
-AC_CONFIG_SRCDIR([common/can232obj.cpp])
+AC_CONFIG_SRCDIR([linux/can232obj.cpp])
 AC_CONFIG_AUX_DIR(autotools)
 AC_CONFIG_HEADERS([config.h])
 
@@ -100,20 +100,19 @@ dnl
 dnl Project base installation folder
 dnl
 
-dnl AC_ARG_VAR(DESTDIR, Set base folder for installation (/srv/vscp) )
-dnl if test "${DESTDIR+set}" = set; then
-dnl   echo "variable \$DESTDIR is set to: $DESTDIR"
-dnl else
-dnl   DESTDIR="/srv/vscp/"
-dnl   echo "variable \$DESTDIR is set to: $DESTDIR"
-dnl fi
+AC_ARG_VAR(DESTDIR, Set base folder for installation (/srv/vscp) )
+if test "${DESTDIR+set}" = set; then
+  echo "variable \$DESTDIR is set to: $DESTDIR"
+else
+  DESTDIR="/var/lib/vscp"
+  echo "variable \$DESTDIR is set to: $DESTDIR"
+fi
 
 dnl
 dnl Project Sub directories
 dnl
 
 PROJ_SUBDIRS="linux "
-
 AC_SUBST(PROJ_SUBDIRS)
 
 dnl
@@ -136,7 +135,7 @@ echo   "           VSCP configuration"
 echo   "--------------------------------------------"
 echo   "Version          : ${PACKAGE_VERSION} (major_version.minor_version.release_version.build_version)"
 echo   "System           : `uname -a` "
-echo   "DESTDIR          : ${DESTDIR}"
+echo   "VSCP install dir : ${DESTDIR}"
 
 dnl echo   "${ax_enable_debug}"
 if test "${ax_enable_debug}" = "yes"

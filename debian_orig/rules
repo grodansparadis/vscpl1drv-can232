@@ -3,6 +3,10 @@
 %:
 	dh $@ --with autoreconf
 
+override_dh_shlibdeps:
+	dpkg-shlibdeps -Tdebian/vscpl1drv-can232.substvars $$(pwd)/debian/vscpl1drv-can232%MAJOR-VERSION/usr/lib/%SUBFOLDER/vscpl1drv-can232.so.%MAJOR-VERSION.%MINOR-VERSION.%RELEASE-VERSION
+
+
 override_dh_auto_install:
-	strip linux/vscpl1drv-can232.so
-	install -D -m 0755 linux/vscpl1drv-can232.so $$(pwd)/debian/vscpl1drv-can232/srv/vscp/drivers/level1/vscpl1drv-can232.so
+	strip linux/vscpl1drv-can232.so.%MAJOR-VERSION.%MINOR-VERSION.%RELEASE-VERSION
+

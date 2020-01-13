@@ -4,7 +4,7 @@
 // This file is part is part of CANAL (CAN Abstraction Layer)
 // http://www.vscp.org)
 //
-// Copyright (C) 2000-2019 Ake Hedman,
+// Copyright (C) 2000-2020 Ake Hedman,
 // Ake Hedman, Grodans Paradis AB, <akhe@grodansparadis.com>
 //
 // This library is free software; you can redistribute it and/or
@@ -225,7 +225,7 @@ bool CCAN232Obj::open(const char *pDevice, unsigned long flags)
     printf("Trying to close CAN bus first\n");
     while (!CANClose) {
         printf("C Write [");
-        for (int i = 0; i < strlen(szCmd); i++) {
+        for (size_t i = 0; i < strlen(szCmd); i++) {
             printf(" %02X", szCmd[i]);
         }
         printf("]\n");
@@ -274,7 +274,7 @@ bool CCAN232Obj::open(const char *pDevice, unsigned long flags)
     printf("Trying to get version\n");
     while (!GETVersion) {
         printf("V Write [");
-        for (int i = 0; i < strlen(szCmd); i++) {
+        for (size_t i = 0; i < strlen(szCmd); i++) {
             printf("%02X ", szCmd[i]);
         }
         printf("]\n");
@@ -335,7 +335,7 @@ bool CCAN232Obj::open(const char *pDevice, unsigned long flags)
     //----------------------------------------------------------------------
     sprintf(szCmd, "O\r");
     printf("O Write [");
-    for (int i = 0; i < strlen(szCmd); i++) {
+    for (size_t i = 0; i < strlen(szCmd); i++) {
         printf("%02X ", szCmd[i]);
     }
     printf("]\n");
@@ -358,7 +358,7 @@ bool CCAN232Obj::open(const char *pDevice, unsigned long flags)
     if (m_can232obj.m_version >= 1220) {
         sprintf(szCmd, "P\r");
         printf("P Write [");
-        for (int i = 0; i < strlen(szCmd); i++) {
+        for (size_t i = 0; i < strlen(szCmd); i++) {
             printf("%02X ", szCmd[i]);
         }
         printf("]\n");
@@ -623,7 +623,7 @@ bool CCAN232Obj::getStatus(PCANALSTATUS pCanalStatus)
 void *workThread(void *pObject)
 {
     int rv = 0;
-    int cnt;
+    
     bool bActivity = true;
     short nPollCnt = 0;
     char szResponse[ 32 ];
@@ -762,7 +762,7 @@ void *workThread(void *pObject)
             // Send the data
             pcan232obj->m_can232obj.m_comm.comm_puts(buf, strlen(buf), true);
             printf("workThread T - Write [");
-            for (int i = 0; i < strlen(buf); i++) {
+            for (size_t i = 0; i < strlen(buf); i++) {
                 if (buf[i] == 0x0D) {
                     printf("[CR]");
                 } else {
@@ -772,7 +772,7 @@ void *workThread(void *pObject)
             printf("]\n");
             pcan232obj->m_can232obj.m_comm.comm_gets(szResponse, sizeof( szResponse), 10000);
             printf("workThread T - Read  [");
-            for (int i = 0; i < strlen(szResponse); i++) {
+            for (size_t i = 0; i < strlen(szResponse); i++) {
                 if (szResponse[i] == 0x0D) {
                     printf("[CR]");
                 } else {

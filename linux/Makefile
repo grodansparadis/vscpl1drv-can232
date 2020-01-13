@@ -9,15 +9,10 @@ RELEASE_VERSION=0
 BUILD_VERSION=0
 PACKAGE_VERSION=1.1.0
 
-# Library version
-LIB_MAJOR_VERSION = 1
-LIB_MINOR_VERSION = 1
-LIB_RELEASE_VERSION = 0
-
 # STATIC = yes if a static build is requested.
 STATIC=no
-VSCP_PROJ_BASE_DIR=
-DESTDIR=
+VSCP_PROJ_BASE_DIR=/var/lib/vscp
+DESTDIR=/var/lib/vscp
 
 prefix = /usr/local
 exec_prefix = ${prefix}
@@ -28,9 +23,27 @@ top_builddir = ..
 CC = gcc
 CXX = g++
 
-CFLAGS =  -fPIC  -DCBC -I../vscp-main-repo/src/common -I../vscp-main-repo/src/vscp/common
-CXXFLAGS = -D__LINUX__ -fPIC -D_REENTRANT 
-CPPFLAGS = -D__LINUX__ -fPIC  -fno-var-tracking-assignments -I../vscp-main-repo/src/common -I../vscp-main-repo/src/vscp/common
+WARNINGS_HARD = -Werror -Wall -Wextra -pedantic -Wcast-align -Wcast-qual \
+  -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self \
+  -Wlogical-op -Wmissing-include-dirs -Wnoexcept -Wold-style-cast \
+  -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo \
+  -Wstrict-null-sentinel -Wstrict-overflow=5 -Wundef -Wno-unused \
+  -Wno-variadic-macros -Wno-parentheses -fdiagnostics-show-option
+WARNINGS_MEDIUM = -Wformat-security -Wformat=2 -Wmissing-include-dirs \
+  -Wno-parentheses -Wformat=2 -Wlogical-op
+WARNINGS = -Wall
+
+VERSION_DEFS = -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) \
+	-DRELEASE_VERSION=$(RELEASE_VERSION) -DBUILD_VERSION=$(BUILD_VERSION)
+
+CFLAGS =  -fPIC ${WARNINGS} -DCBC \
+	-I../vscp/src/vscp/common \
+	-I../vscp/src/common
+CXXFLAGS = -D__LINUX__ -fPIC ${WARNINGS} -D_REENTRANT 
+CPPFLAGS = -D__LINUX__ -fPIC ${WARNINGS}  \
+	-fno-var-tracking-assignments \
+	-I../vscp/src/vscp/common \
+	-I../vscp/src/common
 
 LDFLAGS = 
 EXTRALIBS = 
@@ -48,10 +61,10 @@ libdir = ${exec_prefix}/lib
 datadir = ${prefix}/share
 includedir = ${prefix}/include
 DLLPREFIX = lib
-LIB_SONAME = "vscpl1drv-can4vscp"
+LIB_SONAME = "vscpl1drv-can232"
 
-LIB_PLUS_VER = "vscpl1drv-can4vscp.so.$(LIB_MAJOR_VERSION).$(LIB_MINOR_VERSION).$(LIB_RELEASE_VERSION)"
-LIB_SONAME = "vscpl1drv-can4vscp.so.$(LIB_MAJOR_VERSION)"
+LIB_PLUS_VER = "vscpl1drv-can232.so.$(MAJOR_VERSION).$(MINOR_VERSION).$(RELEASE_VERSION)"
+LIB_SONAME = "vscpl1drv-can232.so.$(MAJOR_VERSION)"
 
 ### Variables: ###
 
@@ -62,7 +75,7 @@ CAN232DRV_OBJECTS = vscpl1drv-can232.o\
 
 ### Targets: ###
 
-all: $(LIB_PLUS_VER) libvscpl1drv-can232.a
+all: $(LIB_PLUS_VER) ../man/vscpl1drv-can232.1
 
 test:  test.o $(PROJOBJS)
 	$(CXX) -o $@ test.o $(PROJOBJS) $(LDFLAGS) -L$(LIBDIRNAME) -lm -lpthread -ldl  $(EXTRALIBS)
@@ -74,14 +87,17 @@ $(LIB_PLUS_VER): $(CAN232DRV_OBJECTS)
 can232obj.o: can232obj.cpp can232obj.h
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c can232obj.cpp -o $@
 
-guid.o: ../vscp-main-repo/src/common/guid.cpp ../vscp-main-repo/src/common/guid.h
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c ../vscp-main-repo/src/common/guid.cpp -o $@
+guid.o: ../vscp/src/vscp/common/guid.cpp ../vscp/src/vscp/common/guid.h
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c ../vscp/src/vscp/common/guid.cpp -o $@
 
-dllist.o: ../vscp-main-repo/src/common/dllist.c ../vscp-main-repo/src/common/dllist.h
-	$(CC) $(CFLAGS) -c ../vscp-main-repo/src/common/dllist.c -o $@
+dllist.o: ../vscp/src/common/dllist.c ../vscp/src/common/dllist.h
+	$(CC) $(CFLAGS) -c ../vscp/src/common/dllist.c -o $@
 
-com.o: ../vscp-main-repo/src/common/com.cpp ../vscp-main-repo/src/common/com.h
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c ../vscp-main-repo/src/common/com.cpp -o $@
+com.o: ../vscp/src/common/com.cpp ../vscp/src/common/com.h
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c ../vscp/src/common/com.cpp -o $@
+
+../man/vscpl1drv-can232.1: ../man/vscpl1drv-can232.1.md
+	pandoc -s -t man ../man/vscpl1drv-can232.1.md -o ../man/vscpl1drv-can232.1
 
 man: ../man/vscpl1drv-can232.1.md
 	pandoc -s -t man ../man/vscpl1drv-can232.1.md -o ../man/vscpl1drv-can232.1
@@ -115,8 +131,8 @@ clean:
 	rm -rf ./.deps ./.pch
 	rm -f ./*.o
 	rm -f ../common/*.o
-	rm -f ../vscp-main-repo/src/common/*.o
-	rm -f ../vscp-main-repo/src/vscp/common/*.o
+	rm -f ../vscp/src/vscp/common/*.o
+	rm -f ../vscp/src/common/*.o
 	rm -f vscpl1drv-can232.so
 	rm -f test
 	rm -rf ../common/*~
