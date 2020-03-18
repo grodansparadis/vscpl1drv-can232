@@ -3,17 +3,11 @@ VSCP Level I driver for devices
 
 <img src="https://vscp.org/images/logo.png" width="100">
 
-This is a driver for the Lawicel CAN232 CAN adapter and other compatible slcan devices.
+vscpl1drv-can232 is a VSCP level I driver ([CANAL driver](https://docs.vscp.org/#canal)) for the **Lawicel CAN232** CAN adapter and other compatible **slcan** devices.
 
-The linux port of this driver is done by (ice@geomi.org)
+The linux port of this driver is created by (ice@geomi.org)
 
-Info about the adaper is available at (http://www.can232.com)
-
-**Available for**: Windows, Linux
-
-**Driver for Windows**: vscpl1drv_can232.dll(vscpl1drv-can232.lib)
-
-**Driver for Linux**: vscpl1drv-can232.so (vscpl2drv-can232.lib)
+Info about the adapter is available at (https://www.can232.com)
 
 This driver interface is for the can232 adapter from Lawicel (or other slcan drivers). This is a low cost CAN adapter that connects to one of the serial communication ports on a computer. The driver can handle the adapter in both polled and non polled mode, which handled transparently to the user. It is recommended however that the following settings are made before real life use.
 
@@ -21,25 +15,58 @@ This driver interface is for the can232 adapter from Lawicel (or other slcan dri
 * Set auto poll mode by issuing the X1 command.
 * Enable the time stamp by issuing the Z1 command.
 
+## Platforms
+  * Linux
+  * Windows
+
+## Driver for Windows
+
+```bash
+vscpl1drv_can232.dll
+```
+
+## Driver for Linux
+
+```bash
+vscpl1drv-can232.so
+```
+## Install location
+
+### Linux
+
+From version 14.0.0 the driver is installed in */var/lib/vscp/drivers/level1*
+
+### Windows
+
+From version 14.0.0 the driver is installed in */program files/vscpd/drivers/level1*
+
 ## Configuration string
+
+All level I drivers are configured using a semicolon separated configuration string.
 
 The driver string has the following format (note that all values can be entered in either decimal or hexadecimal form (for hex precede with 0x).
 
+```bash
 > comport;baudrate;mask;filter;bus-speed[;btr0;btr1]
+```
 
-####  comport
-The serial communication port to use. For windows use 1,2,3... for Linux use /dev/ttyS0, /dev/ttyUSB1 etc.
+###  comport
+The serial communication port to use. 
 
-#### baudrate
+For windows use *1,2,3...* 
+
+For Linux use */dev/ttyS0, /dev/ttyUSB1* etc.
+
+### baudrate
 A valid baud rate for the **serial interface** ( for example. 9600 ).
 
-#### mask
-The mask for the adapter. Read the Lawicel CAN232 manual on how to set this. It is not the same as for CANAL/VSCP.
+### mask (optional)
+The mask for the adapter. Read the Lawicel CAN232 manual on how to set this. It is not the same mask as for CANAL/VSCP.
 
-#### filter
-The filter for the adapter. Read the Lawicel CAN232 manual on how to set this. It is not the same as for CANAL.
+#### filter (optional)
+The filter for the adapter. Read the Lawicel CAN232 manual on how to set this. It is not the same as for CANAL/VSCP.
 
-#### bus-speed
+### bus-speed
 is the speed or the **CAN interface**. Valid values are
 
 | Setting | Bus-speed |
@@ -54,10 +81,10 @@ is the speed or the **CAN interface**. Valid values are
 | 800 | 800Kbps |
 | 1000 | 1Mbps |
 
-#### btr0/btr1 (Optional.)
+### btr0/btr1 (Optional.)
 Instead of setting a bus-speed you can set the SJA1000 BTR0/BTR1 values directly. If both are set the bus_speed parameter is ignored.
 
-This link can be a help for data https://www.port.de/engl/canprod/sv_req_form.html
+### Defaults
 
 If no device string is given COM1/ttyS0 will be used. Baud rate will be set to 115200 baud and the filter/mask to fully open. The CAN bit rate will be 500Kbps.
 
@@ -92,76 +119,96 @@ The CanalGetStatus call returns the status structure with the channel_status mem
 
 ## Example configurations
 
+```bash
 > 5;115200;0;0;1000
+```
 
 Uses COM5 at 115200 with filters/masks open to receive all messages and with 1Mbps CAN bit rate.
 
+```bash
 > /dev/ttyUSB1;57600;0;0;0;0x09;0x1C
-
-Uses serial USB adapter 1 at 57600 baud with filters/masks open to receive all messages and with a CAN bit-rate set to 50Kbps using btr0/btr1
-
-### Typical settings for VSCP daemon config
-
-```xml
-    <driver enable="true" >
-        <name>can232</name>
-        <config>/dev/ttyUSB1;57600;0;0;0;0x09;0x1C</config>
-        <path>/usr/lib/vscpl1drv_can232.so</path>
-        <flags>0</flags>
-        <guid>00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00</guid>
-    </driver>
 ```
 
-### Linux/Unix
-The driver should be installed in the system search path. Default installation directory is */src/vscp/drivers/level1/*
+On Linux uses serial USB adapter 1 at 57600 baud with filters/masks open to receive all messages and with a CAN bit-rate set to 50Kbps using btr0/btr1
 
-In the configuration file (*/etc/vscpd/vscpd.conf*) there should be a line as
+## Typical settings for VSCP daemon config
+
+### Linux
 
 ```xml
-        <canaldriver>  <!-- Information about CANAL drivers -->
-
-		<!-- Other drivers
-			.....
-		  -->
-
-                <driver>
-                        <name>can232</name>
-                        <parameter>/dev/ttyS0;19200;0;0;125</parameter>
-                        <path>/src/vscp/drivers/level1/vscpl1drv-can232</path>
-                        <flags>0</flags>
-                </driver>
-        </canaldriver>
+<!-- The can232 driver -->
+<driver enable="false" 
+        name="can232"
+        config="/dev/ttyS0;19200;0;0;125"
+        flags="0"
+        translation="0x02"
+        path="/var/lib/vscp/drivers/level1/vscpl1drv-can232.so"
+        guid="FF:FF:FF:FF:FF:FF:FF:F5:01:00:00:00:00:00:00:04"
+/>
 ```
 
-to enable the driver
+### Windows
 
+```xml
+<!-- The can232 driver -->
+<driver enable="false"
+        name="can232"
+        config="com1"
+        flags="0"
+        translation="0x02"
+        path="/program files/vscpd/drivers/level1/vscpl1drv-can232.so"
+        guid="FF:FF:FF:FF:FF:FF:FF:F5:01:00:00:00:00:00:00:04"
+/>
+```
 
----
 
 ## Install the driver on Linux
 
 Install Debian package
 
-> sudo dpkg -i vscpl2drv-can232_1.1.0-1_amd64.deb
+```bash
+> sudo apt install ./vscpl2drv-can232_1.1.0-1_amd64.deb
+```
 
 using the latest version from the repositories [release section](https://github.com/grodansparadis/vscpl1drv-can232/releases).
 
 or
 
 ```
-./configure
+./configure 
 ./make
 sudo make install
 ```
 
-Default install folder is **/usr/lib**
+use the switch **--enable-debug** if you want a debug build.
+
+## Install the driver on Linux using vscp private repository
+
+**Warning !!!** *Currently this is very much experimental*
+
+```bash
+wget -O - http://apt.vscp.org/apt.vscp.org.gpg.key | sudo apt-key add -
+```
+
+then add
+
+```bash
+deb http://apt.vscp.org/debian buster main
+deb http://apt.vscp.org/debian eoan main
+```
+
+to the file
+
+```bash
+/etc/apt/sources.list
+```
+
+replace **eoan** with the os-release you have installed and **debian** to *debian*, *ubuntu* or *raspian*
 
 ## Install the driver on Windows
-tbd
+Install using the binary install file in the release section.
 
 ## How to build the driver on Linux
-
-Clone the driver source
 
 ```bash
 git clone https://github.com/grodansparadis/vscpl1drv-can232.git
@@ -172,13 +219,9 @@ make
 make install
 ```
 
-Default install folder is **/usr/local/lib** If you want to install to **/usr/lib** set the prefix when you run configure
+Default install folder is **/var/lib/vscp/drivers/level1**
 
-> ./configure --prefix /usr
-
-which will install the driver to **/usr/lib**
-
-You need *build-essentials* and *git* installed on your system
+You need *build-essentials* and *git* installed on your system.
 
 ```bash
 sudo apt update && sudo apt -y upgrade
@@ -187,32 +230,22 @@ sudo apt install build-essential git
 
 
 ## How to build the driver on Windows
-tbd
+The source contains a Visual Studio project. Use this project to build the driver.
 
 ---
 
 There are many Level I drivers (CANAL drivers) available in VSCP & Friends framework that can be used with both VSCP Works and the VSCP Daemon (vscpd) and other tools that interface the drivers using the CANAL standard interface. Added to that many Level II and Level III drivers are available that can be used with the VSCP Daemon.
 
-Level I drivers is documented [here](https://grodansparadis.gitbooks.io/the-vscp-daemon/level_i_drivers.html).
+Level I drivers is documented [here](https://docs.vscp.org/vscpd/latest/#/level_i_drivers).
 
-Level II drivers is documented [here](https://grodansparadis.gitbooks.io/the-vscp-daemon/level_ii_drivers.html)
+Level II drivers is documented [here](https://docs.vscp.org/vscpd/latest/#/level_ii_drivers)
 
-Level III drivers is documented [here](https://grodansparadis.gitbooks.io/the-vscp-daemon/level_iii_drivers.html)
-
-# SEE ALSO
-
-`vscpd` (8).
-`uvscpd` (8).
-`vscpworks` (1).
-`vscpcmd` (1).
-`vscp-makepassword` (1).
-`vscphelperlib` (1).
 
 The VSCP project homepage is here <https://www.vscp.org>.
 
-The [manual](https://grodansparadis.gitbooks.io/the-vscp-daemon) for vscpd contains full documentation. Other documentation can be found here <https://grodansparadis.gitbooks.io>.
+The [manual](https://docs.vscp.org/vscpd/latest) for vscpd contains full documentation. Other documentation can be found on the  [documentaion portal](https://docs.vscp.org).
 
 The vscpd source code may be downloaded from <https://github.com/grodansparadis/vscp>. Source code for other system components of VSCP & Friends are here <https://github.com/grodansparadis>
 
 # COPYRIGHT
-Copyright 2000-2019 Åke Hedman, Grodans Paradis AB - MIT license.
+Copyright © 2000-2020 Ake Hedman, Grodans Paradis AB - MIT license.

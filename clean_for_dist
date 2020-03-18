@@ -1,4 +1,5 @@
 #!/bin/sh
+vscp/clean_for_dist
 
 echo Remove special files
 rm -rf release_reminders.txt*
