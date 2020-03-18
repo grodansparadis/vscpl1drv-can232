@@ -17,7 +17,7 @@ RELEASE_DEBIAN=`head -n4  VERSION.m4 |  grep release_debian | tr -d "m4_define[r
 
 NAME_PLUS_VER="vscpl1drv-can232-$MAJOR_VERSION.$MINOR_VERSION.$RELEASE_VERSION"
 BUILD_FOLDER="../dist"
-DATENOW="`date -R`"
+DATENOW="$(date -R)"
 rm -rf ../dist/*
 
 # Debian compability 10 on Raspberry
@@ -153,7 +153,7 @@ echo "***   $NAME_PLUS_VER.tgz created."
 cd $BUILD_FOLDER
 mkdir $NAME_PLUS_VER/
 cd $NAME_PLUS_VER/
-tar -zxf ../$NAME_PLUS_VER.tar.gz
+tar -zxf "../$NAME_PLUS_VER.tar.gz"
 
 echo "***   Making 'debian' folder"
 mkdir debian

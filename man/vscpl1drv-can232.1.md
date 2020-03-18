@@ -1,6 +1,6 @@
 % VSCPL1DRV-CAN232(1) VSCP Level I CAN232 (slcan) Driver
 % Åke Hedman, Grodans Paradis AB
-% January 10, 2020
+% MArs 18, 2020
 
 # NAME
 
@@ -12,7 +12,7 @@ vscpl1drv-can232
 
 # DESCRIPTION
 
-This driver interface is for the can232 adapter from Lawicel (or other slcan hardware). This is a low cost CAN adapter that connects to one of the serial communication ports on a computer. The driver can handle the adapter in both polled and non polled mode, which handled transparently to the user. It is recommended however that the following settings are made before real life use.
+This CANAL driver interface is for the can232 adapter from Lawicel (or other slcan hardware). This is a low cost CAN adapter that connects to one of the serial communication ports on a computer. The driver can handle the adapter in both polled and non polled mode, which handled transparently to the user. It is recommended however that the following settings are made before real life use.
 
 * Set the baud rate for the device to 115200. You do this with the U1 command. This is the default baud rate used by this driver.
 * Set auto poll mode by issuing the X1 command.
@@ -26,19 +26,19 @@ The configuration string has the following format (note that all values can be e
 
 If no device string is given COM1/ttyS0 will be used. Baud rate will be set to 115200 baud and the filter/mask to fully open. The CAN bit rate will be 125Kbps.
 
-####  comport
+###  comport
 The serial communication port to use. For windows use 1,2,3... for Linux use /dev/ttyS0, /dev/ttyUSB1 etc.
 
-#### baudrate
+### baudrate
 A valid baud rate for the **serial interface** ( for example. 9600 ).
 
-#### mask
+### mask
 The mask for the adapter. Read the Lawicel CAN232 manual on how to set this. It is not the same as for CANAL/VSCP.
 
-#### filter
+### filter
 The filter for the adapter. Read the Lawicel CAN232 manual on how to set this. It is not the same as for CANAL.
 
-#### bus-speed
+### bus-speed
 is the speed or the **CAN interface**. Valid values are
 
 | Setting | Bus-speed |
@@ -53,7 +53,7 @@ is the speed or the **CAN interface**. Valid values are
 | 800 | 800Kbps |
 | 1000 | 1Mbps |
 
-#### btr0/btr1 (Optional.)
+### btr0/btr1 (Optional.)
 Instead of setting a bus-speed you can set the SJA1000 BTR0/BTR1 values directly. If both are set the bus_speed parameter is ignored.
 
 ## Flags
@@ -102,13 +102,15 @@ Uses serial USB adapter 1 at 57600 baud with filters/masks open to receive all m
 ### Typical settings for VSCP daemon config
 
 ```xml
-<driver enable="true" >
-    <name>can232</name>
-    <config>/dev/ttyUSB1;57600;0;0;0;0x09;0x1C</config>
-    <path>/usr/lib/vscpl1drv_can232.so</path>
-    <flags>0</flags>
-    <guid>00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00</guid>
-</driver>
+<!-- The can232 driver -->
+<driver enable="false"
+        name="can232"
+        config="com1"
+        flags="0"
+        translation="0x02"
+        path="/program files/vscpd/drivers/level1/vscpl1drv-can232.so"
+        guid="FF:FF:FF:FF:FF:FF:FF:F5:01:00:00:00:00:00:00:04"
+/>
 ```
 
 ---
@@ -118,7 +120,6 @@ There are many Level I drivers (CANAL drivers) available in VSCP & Friends frame
 # SEE ALSO
 
 `vscpd` (8).
-`uvscpd` (8).
 `vscpworks` (1).
 `vscpcmd` (1).
 `vscp-makepassword` (1).
@@ -126,5 +127,5 @@ There are many Level I drivers (CANAL drivers) available in VSCP & Friends frame
 
 The VSCP project homepage is here <https://www.vscp.org>.
 
-# COPYRIGHT
+## COPYRIGHT
 Copyright 2000-2020 Åke Hedman, Grodans Paradis AB - MIT license.

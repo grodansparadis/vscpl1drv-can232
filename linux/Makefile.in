@@ -75,7 +75,9 @@ CAN232DRV_OBJECTS = vscpl1drv-can232.o\
 
 ### Targets: ###
 
-all: $(LIB_PLUS_VER) ../man/vscpl1drv-can232.1
+# ../man/vscpl1drv-can232.1 
+
+all: $(LIB_PLUS_VER) 
 
 test:  test.o $(PROJOBJS)
 	$(CXX) -o $@ test.o $(PROJOBJS) $(LDFLAGS) -L$(LIBDIRNAME) @LIBS@ $(EXTRALIBS)
