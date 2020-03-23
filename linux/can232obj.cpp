@@ -770,15 +770,16 @@ void *workThread(void *pObject)
                 }
             }
             printf("]\n");
-            pcan232obj->m_can232obj.m_comm.comm_gets(szResponse, sizeof( szResponse), 10000);
             printf("workThread T - Read  [");
-            for (size_t i = 0; i < strlen(szResponse); i++) {
-                if (szResponse[i] == 0x0D) {
+            
+            do{
+                c = pcan232obj->m_can232obj.m_comm.readChar(&cnt);
+                if (c == 0x0D) {
                     printf("[CR]");
                 } else {
-                    printf("%c", szResponse[i]);
+                    printf("%c", c);
                 }
-            }
+            } while(c != 0x0D);
             printf("]\n\n");
             // needed !! At least at 19200 baud
             SLEEP(100);
