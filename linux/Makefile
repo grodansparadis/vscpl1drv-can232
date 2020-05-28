@@ -5,9 +5,9 @@
 # Package version
 MAJOR_VERSION=1
 MINOR_VERSION=1
-RELEASE_VERSION=0
+RELEASE_VERSION=1
 BUILD_VERSION=0
-PACKAGE_VERSION=1.1.0
+PACKAGE_VERSION=1.1.1
 
 # STATIC = yes if a static build is requested.
 STATIC=no
@@ -75,7 +75,9 @@ CAN232DRV_OBJECTS = vscpl1drv-can232.o\
 
 ### Targets: ###
 
-all: $(LIB_PLUS_VER) ../man/vscpl1drv-can232.1
+# ../man/vscpl1drv-can232.1 
+
+all: $(LIB_PLUS_VER) 
 
 test:  test.o $(PROJOBJS)
 	$(CXX) -o $@ test.o $(PROJOBJS) $(LDFLAGS) -L$(LIBDIRNAME) -lm -lpthread -ldl  $(EXTRALIBS)
@@ -133,7 +135,7 @@ clean:
 	rm -f ../common/*.o
 	rm -f ../vscp/src/vscp/common/*.o
 	rm -f ../vscp/src/common/*.o
-	rm -f vscpl1drv-can232.so
+	rm -f vscpl1drv-can232.so*
 	rm -f test
 	rm -rf ../common/*~
 	rm -rf *~

@@ -5,9 +5,9 @@
 # Package version
 MAJOR_VERSION=1
 MINOR_VERSION=1
-RELEASE_VERSION=0
+RELEASE_VERSION=1
 BUILD_VERSION=0
-PACKAGE_VERSION=1.1.0
+PACKAGE_VERSION=1.1.1
 
 STATIC=no
 
@@ -47,7 +47,6 @@ clean:
 
 distclean: clean
 	@sh clean_for_dist
-	rm -f m4/Makefile
 
 deb:
 	@for d in $(PROJ_SUBDIRS); do (echo "====================================================" &&\

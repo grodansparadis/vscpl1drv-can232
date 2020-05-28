@@ -1,6 +1,6 @@
 vscpl1drv-can232 (%MAJOR-VERSION.%MINOR-VERSION.%RELEASE-VERSION-%RELEASE-DEBIAN) stable; urgency=medium
 
-  * Initial release
+  * Fixes by @benys  fix receive data from can after send frame
 
  -- Ake Hedman <akhe@grodansparadis.com>  %DATENOW
  

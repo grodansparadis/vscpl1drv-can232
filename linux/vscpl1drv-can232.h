@@ -28,7 +28,7 @@
 #include "can232obj.h"
 
 // This is the version info for this DLL - Change to your own value
-#define DLL_VERSION		1
+#define DLL_VERSION		2
 
 // This is the vendor string - Change to your own value
 #define CANAL_DLL_VENDOR "ice@geomi.org, BG, http://geomi.org"

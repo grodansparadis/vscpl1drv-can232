@@ -261,7 +261,7 @@
 #define PACKAGE_NAME "vscpl1drv-can232"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "vscpl1drv-can232 1.1.0"
+#define PACKAGE_STRING "vscpl1drv-can232 1.1.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "vscpl1drv-can232"
@@ -270,7 +270,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.0"
+#define PACKAGE_VERSION "1.1.1"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -301,7 +301,7 @@
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
-/* #undef YYTEXT_POINTER */
+#define YYTEXT_POINTER 1
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
