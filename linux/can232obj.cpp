@@ -4,7 +4,7 @@
 // This file is part is part of CANAL (CAN Abstraction Layer)
 // http://www.vscp.org)
 //
-// Copyright (C) 2000-2021 Ake Hedman,
+// Copyright (C) 2000-2025 Ake Hedman,
 // Ake Hedman, Grodans Paradis AB, <akhe@grodansparadis.com>
 //
 // This library is free software; you can redistribute it and/or
@@ -626,7 +626,7 @@ void *workThread(void *pObject)
     
     bool bActivity = true;
     short nPollCnt = 0;
-    char szResponse[ 32 ];
+    //char szResponse[ 32 ];
 
     printf("can232obj in workThread\n");
 
