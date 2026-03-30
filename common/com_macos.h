@@ -21,8 +21,21 @@
 #include <termios.h>
 #include <pthread.h>
 
+// Parity constants
+#define NOPARITY        0x00
+#define EVENPARITY      0x01
+#define ODDPARITY       0x02
+
+// Stop bits constants
+#define ONESTOPBIT      0x00
+#define TWOSTOPBITS     0x02
+
+// Handshake constants
+#define HANDSHAKE_NONE          0x00
+#define HANDSHAKE_XONXOFF      0x01
+
 ///////////////////////////////////////////////////////////////////////////////
-// Comm - macOS/POSIX serial communication class
+// CComm - POSIX/macOS serial communication class
 //
 
 class Comm {
@@ -33,34 +46,30 @@ public:
     // Destructor
     ~Comm(void);
 
-    // Open communication port
-    // portname: Serial port device (e.g., "/dev/ttyUSB0", "/dev/tty.usbserial")
-    // baudrate: Baud rate (9600, 19200, 38400, 57600, 115200, etc.)
-    // Returns: true on success, false on failure
-    bool open(const char *portname, speed_t baudrate = B9600);
+    // Initialize serial port with configuration
+    bool init(unsigned int port, unsigned long baudrate, 
+              int dataBits, int parity, int stopBits, int handshake);
 
     // Close communication port
     void close(void);
 
     // Check if port is open
-    bool isOpen(void) const { return m_fd >= 0; }
+    int getHandle(void) const { return m_fd; }
 
-    // Send data
-    // Returns: number of bytes sent, -1 on error
-    int send(const void *buf, size_t len);
+    // Send string with optional echo and CR
+    void write(const char *str, bool bEchoed = false, bool bAddCR = false);
 
-    // Receive data (non-blocking with timeout)
-    // Returns: number of bytes received, 0 on timeout, -1 on error
-    int receive(void *buf, size_t len);
+    // Read buffer with timeout
+    int readBuf(char *buf, size_t size, int timeout = -1);
 
-    // Flush serial buffers
-    void flush(void);
+    // Read single character with timeout
+    int readChar(int timeout = 1000);
 
-    // Set receive timeout (milliseconds)
-    void setReadTimeout(unsigned int ms) { m_readTimeout = ms; }
+    // Clear input buffer
+    void drainInput(void);
 
-    // Get receive timeout
-    unsigned int getReadTimeout(void) const { return m_readTimeout; }
+    // Send command and wait for response
+    bool sendCommand(const char *cmd, const char *term, int wait = 100);
 
 private:
     int m_fd;                           ///< File descriptor for serial port
@@ -68,6 +77,12 @@ private:
     struct termios m_oldTios;           ///< Original terminal settings
     pthread_mutex_t m_mutex;            ///< Mutex for thread safety
     unsigned int m_readTimeout;         ///< Read timeout in milliseconds
+    
+    // Helper to convert port number to device path
+    void getPortName(unsigned int port, char *devpath, size_t maxlen);
 };
+
+// Define CComm as alias for Comm for compatibility
+typedef Comm CComm;
 
 #endif // COM_MACOS_H

@@ -15,6 +15,26 @@
 
 #include <windows.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+// Parity constants
+#define NOPARITY        0x00
+#define EVENPARITY      0x01
+#define ODDPARITY       0x02
+#define MARKPARITY      0x03
+#define SPACEPARITY     0x04
+
+// Stop bits constants
+#define ONESTOPBIT      0x00
+#define ONE5STOPBITS    0x01
+#define TWOSTOPBITS     0x02
+
+// Handshake constants
+#define HANDSHAKE_NONE          0x00
+#define HANDSHAKE_XONXOFF      0x01
+#define HANDSHAKE_RTS_CTS      0x02
+#define HANDSHAKE_DTR_DSR      0x03
 
 ///////////////////////////////////////////////////////////////////////////////
 // CComm - Windows serial communication class
@@ -28,34 +48,50 @@ public:
     // Destructor
     ~CComm(void);
 
-    // Open communication port
-    // portname: COM port name (e.g., "COM1", "COM2")
-    // baudrate: Baud rate (9600, 19200, 38400, 57600, 115200, etc.)
-    // Returns: true on success, false on failure
-    bool open(const char *portname, long baudrate = 9600);
+    // Initialize serial port
+    // port: COM port number (1, 2, 3, etc.)
+    // baudrate: Baud rate
+    // dataBits: Data bits (5-8)
+    // parity: Parity (NOPARITY, EVENPARITY, ODDPARITY, etc.)
+    // stopBits: Stop bits (ONESTOPBIT, TWOSTOPBITS, etc.)
+    // handshake: Handshake mode
+    // Returns: true on success
+    bool init(unsigned int port, unsigned long baudrate, 
+              int dataBits, int parity, int stopBits, int handshake);
 
     // Close communication port
     void close(void);
 
     // Check if port is open
-    bool isOpen(void) const { return m_hComPort != INVALID_HANDLE_VALUE; }
+    HANDLE getHandle(void) const { return m_hComPort; }
 
-    // Send data
-    // Returns: number of bytes sent, -1 on error
-    int send(const void *buf, size_t len);
+    // Send string with optional echo and CR
+    // str: String to send
+    // bEchoed: Wait for echo
+    // bAddCR: Add carriage return
+    void write(const char *str, bool bEchoed = false, bool bAddCR = false);
 
-    // Receive data
-    // Returns: number of bytes received, -1 on error
-    int receive(void *buf, size_t len);
+    // Read buffer with timeout
+    // buf: Buffer to read into
+    // size: Buffer size
+    // timeout: Timeout in milliseconds (-1 for no timeout)
+    // Returns: Number of bytes read
+    int readBuf(char *buf, size_t size, int timeout = -1);
 
-    // Flush serial buffers
-    void flush(void);
+    // Read single character with timeout
+    // timeout: Timeout in milliseconds
+    // Returns: Character read, or -1 on timeout/error
+    int readChar(int timeout = 1000);
 
-    // Set receive timeout (milliseconds)
-    void setReadTimeout(DWORD ms) { m_readTimeout = ms; }
+    // Clear input buffer
+    void drainInput(void);
 
-    // Get receive timeout
-    DWORD getReadTimeout(void) const { return m_readTimeout; }
+    // Send command and wait for response
+    // cmd: Command to send
+    // term: Terminator string
+    // wait: Wait time between send and read
+    // Returns: true if successful
+    bool sendCommand(const char *cmd, const char *term, int wait = 100);
 
 private:
     HANDLE m_hComPort;          ///< Handle to serial port
