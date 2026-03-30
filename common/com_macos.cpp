@@ -263,7 +263,6 @@ void Comm::write(const char *str, bool bEchoed, bool bAddCR)
 {
     ssize_t nResult;
     char szBuf[256];
-    size_t len;
 
     if (m_fd < 0 || NULL == str) {
         return;
@@ -272,15 +271,7 @@ void Comm::write(const char *str, bool bEchoed, bool bAddCR)
     pthread_mutex_lock(&m_mutex);
 
     // Build the string to send
-    strncpy(szBuf, str, sizeof(szBuf) - 1);
-    szBuf[sizeof(szBuf) - 1] = '\0';
-    
-    if (bAddCR) {
-        len = strlen(szBuf);
-        if (len + 1 < sizeof(szBuf)) {
-            strncat(szBuf, "\r", sizeof(szBuf) - len - 1);
-        }
-    }
+    snprintf(szBuf, sizeof(szBuf), "%s%s", str, bAddCR ? "\r" : "");
 
     // Send the string
     nResult = ::write(m_fd, szBuf, strlen(szBuf));
