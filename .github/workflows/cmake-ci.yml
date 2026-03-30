@@ -121,7 +121,7 @@ jobs:
         ls -la artifacts/
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: vscpl1drv-can232-${{ matrix.artifact-suffix }}
         path: artifacts/
