@@ -2,7 +2,323 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "taskName": "build vscpl1drv-can232",
+            "label": "CMake: Setup (Init Submodules) - Linux",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "./setup.sh"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "windows": {
+                "hidden": true
+            }
+        },
+        {
+            "label": "CMake: Setup (Init Submodules) - Windows",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "setup.bat"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "windows": {
+                "hidden": false
+            },
+            "linux": {
+                "hidden": true
+            },
+            "osx": {
+                "hidden": true
+            }
+        },
+        {
+            "label": "CMake: Configure (Debug)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-B",
+                "build",
+                "-S",
+                ".",
+                "-DCMAKE_BUILD_TYPE=Debug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$cmake"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "CMake: Configure (Release)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-B",
+                "build-release",
+                "-S",
+                ".",
+                "-DCMAKE_BUILD_TYPE=Release"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$cmake"
+            ]
+        },
+        {
+            "label": "CMake: Build (Debug)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build",
+                "--parallel"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "CMake: Build (Release)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build-release",
+                "--parallel"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "CMake: Clean",
+            "type": "shell",
+            "command": "rm",
+            "args": [
+                "-rf",
+                "build"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "CMake: Clean All",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "rm -rf build build-release build-tests"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "CMake: Install",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--install",
+                "build",
+                "--prefix",
+                "/var/lib/vscp"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: Configure (Xcode) - macOS",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-B",
+                "build-xcode",
+                "-S",
+                ".",
+                "-G",
+                "Xcode",
+                "-DCMAKE_BUILD_TYPE=Release"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$cmake"
+            ],
+            "osx": {
+                "hidden": false
+            },
+            "windows": {
+                "hidden": true
+            },
+            "linux": {
+                "hidden": true
+            }
+        },
+        {
+            "label": "CMake: Build for macOS (Universal Binary)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-B",
+                "build-universal",
+                "-S",
+                ".",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$cmake"
+            ],
+            "osx": {
+                "hidden": false
+            },
+            "windows": {
+                "hidden": true
+            },
+            "linux": {
+                "hidden": true
+            }
+        },
+        {
+            "label": "CPack: Create macOS DMG",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "cd build && cpack -G DragDrop"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [],
+            "osx": {
+                "hidden": false
+            },
+            "windows": {
+                "hidden": true
+            },
+            "linux": {
+                "hidden": true
+            }
+        },
+        {
+            "label": "CPack: Create macOS PKG",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "cd build && cpack -G ProductBuild"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [],
+            "osx": {
+                "hidden": false
+            },
+            "windows": {
+                "hidden": true
+            },
+            "linux": {
+                "hidden": true
+            }
+        },
+        {
+            "label": "Xcode: Open Project",
+            "type": "shell",
+            "command": "open",
+            "args": [
+                "build-xcode/vscpl1drv-can232.xcodeproj"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [],
+            "osx": {
+                "hidden": false
+            },
+            "windows": {
+                "hidden": true
+            },
+            "linux": {
+                "hidden": true
+            }
+        },
+        {
+            "label": "Autotools: build vscpl1drv-can232",
             "type": "shell",
             "command": "rm -rf dest; make",
             "args": [],
@@ -13,7 +329,7 @@
             "problemMatcher": "$gcc"
         },
         {
-            "taskName": "clean & build vscpl1drv-can232",
+            "label": "Autotools: clean & build vscpl1drv-can232",
             "type": "shell",
             "command": "rm -rf dest; make clean; make",
             "args": [],
@@ -35,7 +351,7 @@
               }
         },
         {
-            "taskName": "build debian package",
+            "label": "Autotools: build debian package",
             "type": "shell",
             "command": "./build_debian_package.sh",
             "args": [],
@@ -46,7 +362,7 @@
             "problemMatcher": "$gcc"
         },
         {
-            "taskName": "build ubuntu trusty",
+            "label": "Autotools: build ubuntu trusty",
             "type": "shell",
             "command": "cd dist;sudo OS=ubuntu DIST=trusty ARCH=amd64 pbuilder build *.dsc",
             "args": [],
@@ -55,6 +371,6 @@
                 "isDefault": false
             },
             "problemMatcher": "$gcc"
-        },
+        }
     ]
 }

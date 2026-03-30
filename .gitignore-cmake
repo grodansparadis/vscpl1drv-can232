@@ -1,0 +1,30 @@
+# Ignore build directories
+build/
+build-*/
+cmake-build-*/
+
+# Ignore CMake generated files
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+Makefile
+
+# Ignore generated files
+*.so*
+*.a
+*.o
+*.exe
+*.dll
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Distribution
+dist/
+dest/
