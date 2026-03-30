@@ -32,3 +32,5 @@
 *.app
 linux/test
 build
+
+linux/vscpl1drv-can232.so.*
