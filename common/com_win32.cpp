@@ -217,10 +217,10 @@ unsigned char CComm::readChar(int *pCnt)
     char c = 0;
     DWORD dwBytesRead = 0;
     COMMTIMEOUTS oldTimeouts, newTimeouts;
+    int localCnt = 0;
 
     if (NULL == pCnt) {
-        *pCnt = 0;
-        return 0;
+        pCnt = &localCnt;
     }
 
     if (INVALID_HANDLE_VALUE == m_hComPort) {

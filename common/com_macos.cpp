@@ -13,7 +13,28 @@
 #include "com_macos.h"
 #include <sys/select.h>
 #include <errno.h>
-#include <sys/file.h>
+
+static int lockSerialFd(int fd)
+{
+    struct flock lock;
+
+    memset(&lock, 0, sizeof(lock));
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+
+    return fcntl(fd, F_SETLK, &lock);
+}
+
+static int unlockSerialFd(int fd)
+{
+    struct flock lock;
+
+    memset(&lock, 0, sizeof(lock));
+    lock.l_type = F_UNLCK;
+    lock.l_whence = SEEK_SET;
+
+    return fcntl(fd, F_SETLK, &lock);
+}
 
 // Baud rate mapping
 static struct {
@@ -194,10 +215,15 @@ bool Comm::open(const char *szDevice)
         return false;
     }
 
-    flock(m_fd, LOCK_EX);
+    if (-1 == lockSerialFd(m_fd)) {
+        ::close(m_fd);
+        m_fd = -1;
+        pthread_mutex_unlock(&m_mutex);
+        return false;
+    }
 
     if (tcgetattr(m_fd, &m_tios) != 0) {
-        flock(m_fd, LOCK_UN);
+        unlockSerialFd(m_fd);
         ::close(m_fd);
         m_fd = -1;
         pthread_mutex_unlock(&m_mutex);
@@ -221,7 +247,7 @@ void Comm::close(void)
     if (m_fd >= 0) {
         tcflush(m_fd, TCIOFLUSH);
         tcsetattr(m_fd, TCSANOW, &m_oldTios);
-        flock(m_fd, LOCK_UN);
+        unlockSerialFd(m_fd);
         ::close(m_fd);
         m_fd = -1;
     }
@@ -237,6 +263,7 @@ void Comm::write(const char *str, bool bEchoed, bool bAddCR)
 {
     ssize_t nResult;
     char szBuf[256];
+    size_t len;
 
     if (m_fd < 0 || NULL == str) {
         return;
@@ -249,7 +276,10 @@ void Comm::write(const char *str, bool bEchoed, bool bAddCR)
     szBuf[sizeof(szBuf) - 1] = '\0';
     
     if (bAddCR) {
-        strncat(szBuf, "\r", sizeof(szBuf) - 1);
+        len = strlen(szBuf);
+        if (len + 1 < sizeof(szBuf)) {
+            strncat(szBuf, "\r", sizeof(szBuf) - len - 1);
+        }
     }
 
     // Send the string
@@ -412,12 +442,20 @@ int Comm::comm_gets(char *Buffer, int max)
 int Comm::comm_gets(char *Buffer, int nChars, long timeout)
 {
     int cnt;
+    int capacity;
     int s_to = 0;
     int us_to = 0;
 
     if (!isOpen() || NULL == Buffer || nChars <= 0) {
         return 0;
     }
+
+    if (1 == nChars) {
+        Buffer[0] = '\0';
+        return 0;
+    }
+
+    capacity = nChars - 1;
 
     if (timeout > 1000000) {
         s_to = (int)(timeout / 1000000);
@@ -431,7 +469,7 @@ int Comm::comm_gets(char *Buffer, int nChars, long timeout)
 
     pthread_mutex_lock(&m_mutex);
 
-    for (cnt = 0; cnt < nChars; cnt++) {
+    for (cnt = 0; cnt < capacity; cnt++) {
         fd_set readfds;
         struct timeval tval;
 
@@ -441,19 +479,22 @@ int Comm::comm_gets(char *Buffer, int nChars, long timeout)
         tval.tv_sec = s_to;
         tval.tv_usec = us_to;
 
-        if (select(m_fd + 1, &readfds, NULL, NULL, &tval) != 0) {
+        if (select(m_fd + 1, &readfds, NULL, NULL, &tval) > 0) {
             if (::read(m_fd, &Buffer[cnt], 1) != 1) {
+                Buffer[cnt] = '\0';
                 pthread_mutex_unlock(&m_mutex);
                 return cnt;
             }
         } else {
+            Buffer[cnt] = '\0';
             pthread_mutex_unlock(&m_mutex);
             return cnt;
         }
     }
 
+    Buffer[capacity] = '\0';
     pthread_mutex_unlock(&m_mutex);
-    return nChars;
+    return capacity;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -520,9 +561,10 @@ unsigned char Comm::readChar(int *pCnt)
     fd_set readfds;
     struct timeval tv;
     int selectResult;
+    int localCnt = 0;
 
     if (NULL == pCnt) {
-        return 0;
+        pCnt = &localCnt;
     }
 
     if (m_fd < 0) {
