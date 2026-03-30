@@ -43,8 +43,8 @@ find_package(Threads REQUIRED)
 set(COMMON_SOURCES
     ../common/dlldrvobj.cpp
     ../common/can232obj.cpp
+    ../common/com_win32.cpp
     ../third-party/vscp/src/common/dllist.c
-    ../third-party/vscp/src/common/com.cpp
 )
 
 set(COMMON_HEADERS
