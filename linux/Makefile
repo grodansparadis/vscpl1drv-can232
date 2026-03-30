@@ -37,13 +37,15 @@ VERSION_DEFS = -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 	-DRELEASE_VERSION=$(RELEASE_VERSION) -DBUILD_VERSION=$(BUILD_VERSION)
 
 CFLAGS =  -fPIC ${WARNINGS} -DCBC \
-	-I../vscp/src/vscp/common \
-	-I../vscp/src/common
+	-I. \
+	-I../third-party/vscp/src/vscp/common \
+	-I../third-party/vscp/src/common
 CXXFLAGS = -D__LINUX__ -fPIC ${WARNINGS} -D_REENTRANT 
 CPPFLAGS = -D__LINUX__ -fPIC ${WARNINGS}  \
 	-fno-var-tracking-assignments \
-	-I../vscp/src/vscp/common \
-	-I../vscp/src/common
+	-I. \
+	-I../third-party/vscp/src/vscp/common \
+	-I../third-party/vscp/src/common
 
 LDFLAGS = 
 EXTRALIBS = 
@@ -89,14 +91,14 @@ $(LIB_PLUS_VER): $(CAN232DRV_OBJECTS)
 can232obj.o: can232obj.cpp can232obj.h
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c can232obj.cpp -o $@
 
-guid.o: ../vscp/src/vscp/common/guid.cpp ../vscp/src/vscp/common/guid.h
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c ../vscp/src/vscp/common/guid.cpp -o $@
+guid.o: ../third-party/vscp/src/vscp/common/guid.cpp ../third-party/vscp/src/vscp/common/guid.h
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c ../third-party/vscp/src/vscp/common/guid.cpp -o $@
 
-dllist.o: ../vscp/src/common/dllist.c ../vscp/src/common/dllist.h
-	$(CC) $(CFLAGS) -c ../vscp/src/common/dllist.c -o $@
+dllist.o: ../third-party/vscp/src/common/dllist.c ../third-party/vscp/src/common/dllist.h
+	$(CC) $(CFLAGS) -c ../third-party/vscp/src/common/dllist.c -o $@
 
-com.o: ../vscp/src/common/com.cpp ../vscp/src/common/com.h
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c ../vscp/src/common/com.cpp -o $@
+com.o: ../third-party/vscp/src/common/com.cpp ../third-party/vscp/src/common/com.h
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c ../third-party/vscp/src/common/com.cpp -o $@
 
 ../man/vscpl1drv-can232.1: ../man/vscpl1drv-can232.1.md
 	pandoc -s -t man ../man/vscpl1drv-can232.1.md -o ../man/vscpl1drv-can232.1
@@ -133,8 +135,8 @@ clean:
 	rm -rf ./.deps ./.pch
 	rm -f ./*.o
 	rm -f ../common/*.o
-	rm -f ../vscp/src/vscp/common/*.o
-	rm -f ../vscp/src/common/*.o
+	rm -f ../third-party/vscp/src/vscp/common/*.o
+	rm -f ../third-party/vscp/src/common/*.o
 	rm -f vscpl1drv-can232.so*
 	rm -f test
 	rm -rf ../common/*~

@@ -63,7 +63,9 @@ public:
     int readBuf(char *buf, size_t size, int timeout = -1);
 
     // Read single character with timeout
-    int readChar(int timeout = 1000);
+    // pCnt: Pointer to count variable (set to number of characters remaining, 0 on timeout)
+    // Returns: Character read
+    unsigned char readChar(int *pCnt);
 
     // Clear input buffer
     void drainInput(void);

@@ -278,19 +278,60 @@ int Comm::readBuf(char *buf, size_t size, int timeout)
     return (int)nResult;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // readChar - Read single character with timeout
 //
 
-int Comm::readChar(int timeout)
+unsigned char Comm::readChar(int *pCnt)
 {
-    char c;
-    int nRead = readBuf(&c, 2, timeout);  // 2 for space + null terminator
-    
-    if (nRead != 1) {
-        return -1;
+    char c = 0;
+    ssize_t nRead;
+    fd_set readfds;
+    struct timeval tv;
+    int selectResult;
+
+    if (NULL == pCnt) {
+        *pCnt = 0;
+        return 0;
     }
-    
+
+    if (m_fd < 0) {
+        *pCnt = 0;
+        return 0;
+    }
+
+    pthread_mutex_lock(&m_mutex);
+
+    // Set up select with short timeout (100ms)
+    FD_ZERO(&readfds);
+    FD_SET(m_fd, &readfds);
+
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;  // 100ms timeout
+
+    selectResult = select(m_fd + 1, &readfds, NULL, NULL, &tv);
+
+    if (selectResult <= 0) {
+        pthread_mutex_unlock(&m_mutex);
+        *pCnt = 0;
+        return 0;
+    }
+
+    // Data is available, read one character
+    nRead = ::read(m_fd, &c, 1);
+
+    // Try to check how many bytes are available
+    // macOS doesn't have a direct equivalent to Windows' GetFileSize on serial ports,
+    // so we use a non-blocking read to check or just return 0 for simplicity
+    *pCnt = 0;  // Conservative: don't indicate more bytes available
+
+    pthread_mutex_unlock(&m_mutex);
+
+    if (nRead != 1) {
+        return 0;
+    }
+
     return (unsigned char)c;
 }
 

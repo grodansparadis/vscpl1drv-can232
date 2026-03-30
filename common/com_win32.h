@@ -18,19 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Parity constants
-#define NOPARITY        0x00
-#define EVENPARITY      0x01
-#define ODDPARITY       0x02
-#define MARKPARITY      0x03
-#define SPACEPARITY     0x04
-
-// Stop bits constants
-#define ONESTOPBIT      0x00
-#define ONE5STOPBITS    0x01
-#define TWOSTOPBITS     0x02
-
-// Handshake constants
+// Handshake constants (parity and stop bits are defined in Windows headers)
 #define HANDSHAKE_NONE          0x00
 #define HANDSHAKE_XONXOFF      0x01
 #define HANDSHAKE_RTS_CTS      0x02
@@ -79,9 +67,9 @@ public:
     int readBuf(char *buf, size_t size, int timeout = -1);
 
     // Read single character with timeout
-    // timeout: Timeout in milliseconds
-    // Returns: Character read, or -1 on timeout/error
-    int readChar(int timeout = 1000);
+    // pCnt: Pointer to count variable (set to number of characters remaining, 0 on timeout)
+    // Returns: Character read
+    unsigned char readChar(int *pCnt);
 
     // Clear input buffer
     void drainInput(void);

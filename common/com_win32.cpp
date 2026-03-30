@@ -212,15 +212,53 @@ int CComm::readBuf(char *buf, size_t size, int timeout)
 // readChar - Read single character with timeout
 //
 
-int CComm::readChar(int timeout)
+unsigned char CComm::readChar(int *pCnt)
 {
-    char c;
-    int nRead = readBuf(&c, 1, timeout);
-    
-    if (nRead != 1) {
-        return -1;
+    char c = 0;
+    DWORD dwBytesRead = 0;
+    COMMTIMEOUTS oldTimeouts, newTimeouts;
+
+    if (NULL == pCnt) {
+        *pCnt = 0;
+        return 0;
     }
-    
+
+    if (INVALID_HANDLE_VALUE == m_hComPort) {
+        *pCnt = 0;
+        return 0;
+    }
+
+    // Save old timeouts
+    GetCommTimeouts(m_hComPort, &oldTimeouts);
+
+    // Set read timeout to 100ms for readChar
+    newTimeouts = oldTimeouts;
+    newTimeouts.ReadTotalTimeoutConstant = 100;
+    SetCommTimeouts(m_hComPort, &newTimeouts);
+
+    // Try to read one character
+    if (!ReadFile(m_hComPort, &c, 1, &dwBytesRead, NULL)) {
+        *pCnt = 0;
+        SetCommTimeouts(m_hComPort, &oldTimeouts);
+        return 0;
+    }
+
+    // Check how many bytes are still in the buffer
+    DWORD nAvailable = 0;
+    if (dwBytesRead > 0) {
+        COMSTAT comStat;
+        DWORD dwErrors;
+        if (ClearCommError(m_hComPort, &dwErrors, &comStat)) {
+            nAvailable = comStat.cbInQue;
+        }
+    }
+
+    // Set count to remaining bytes in buffer
+    *pCnt = nAvailable;
+
+    // Restore old timeouts
+    SetCommTimeouts(m_hComPort, &oldTimeouts);
+
     return (unsigned char)c;
 }
 
