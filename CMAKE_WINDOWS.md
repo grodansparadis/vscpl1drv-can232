@@ -41,7 +41,7 @@ git submodule update --init --recursive
 # Create and open Visual Studio project
 mkdir build
 cd build
-cmake .. -G "Visual Studio 17 2022"
+cmake .. -G "Visual Studio 17 2022" -A x64
 
 # Then open can232drv.sln in Visual Studio and build
 ```
@@ -54,9 +54,17 @@ git submodule update --init --recursive
 # Configure and build
 mkdir build
 cd build
-cmake .. -G "Visual Studio 17 2022"
+cmake .. -G "Visual Studio 17 2022" -A x64
 cmake --build . --config Release
 ```
+
+If you get an error like `Could not find toolchain file: .../vcpkg.cmake`, run:
+
+```bash
+cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE=""
+```
+
+This clears a broken externally-injected toolchain setting for the current configure command.
 
 #### Option 3: Command Line (MinGW)
 ```bash
@@ -159,6 +167,23 @@ cmake --help
 
 # Explicitly specify compiler
 cmake .. -G "MinGW Makefiles" -DCMAKE_CXX_COMPILER=g++
+```
+
+### "Could not find toolchain file: .../vcpkg.cmake"
+**Cause**: `CMAKE_TOOLCHAIN_FILE` is set in your environment and points to a missing vcpkg path.
+
+**Solution**:
+```bash
+# One-off configure (recommended)
+cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE=""
+
+# Optional: clear environment variable for current shell session
+set CMAKE_TOOLCHAIN_FILE=
+```
+
+In PowerShell, clear for current session with:
+```powershell
+Remove-Item Env:CMAKE_TOOLCHAIN_FILE -ErrorAction SilentlyContinue
 ```
 
 ### "VSCP submodule is missing"
