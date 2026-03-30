@@ -11,6 +11,9 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    env:
+      # Explicitly opt into Node.js 24 for GitHub Actions
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     strategy:
       fail-fast: false
       matrix:
@@ -37,7 +40,7 @@ jobs:
 
     - name: Set up MSVC (Windows)
       if: runner.os == 'Windows'
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@v2
 
     - name: Create build directory
       run: cmake -E make_directory ${{ runner.workspace }}/build
@@ -174,7 +177,7 @@ jobs:
 
     - name: Upload Release Assets
       if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
           vscpl1drv-can232-${{ matrix.artifact-suffix }}.tar.gz
