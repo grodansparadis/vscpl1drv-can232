@@ -50,14 +50,30 @@ public:
     bool init(unsigned int port, unsigned long baudrate, 
               int dataBits, int parity, int stopBits, int handshake);
 
+    // Open serial device path (VSCP com.h compatibility)
+    virtual bool open(const char *szDevice = NULL);
+
     // Close communication port
     void close(void);
 
     // Check if port is open
     int getHandle(void) const { return m_fd; }
 
+    // VSCP com.h compatibility
+    int getFD(void) const { return (m_fd < 0) ? 0 : m_fd; }
+    bool isOpen(void) const { return (0 != getFD()); }
+
+    // Set port parameters (VSCP com.h compatibility)
+    void setParam(const char *baud, const char *parity, const char *bits, int HWFlow = 0, int SWFlow = 0);
+
     // Send string with optional echo and CR
     void write(const char *str, bool bEchoed = false, bool bAddCR = false);
+
+    // VSCP com.h compatibility
+    int comm_puts(char *Buffer, bool bDrain = false);
+    int comm_puts(char *Buffer, int len, bool bDrain = false);
+    int comm_gets(char *Buffer, int max);
+    int comm_gets(char *Buffer, int nChars, long timeout);
 
     // Read buffer with timeout
     int readBuf(char *buf, size_t size, int timeout = -1);
