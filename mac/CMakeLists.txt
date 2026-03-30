@@ -32,7 +32,7 @@ file(WRITE ${CMAKE_BINARY_DIR}/canal_macro.h "#include \"canal-macro.h\"\n")
 set(VSCP_COMPAT_INCLUDE_DIR ${CMAKE_BINARY_DIR})
 
 # Add both VSCP paths and compatibility path
-include_directories(${VSCP_INCLUDE_DIRS} ${VSCP_COMPAT_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/linux .)
+include_directories(${CMAKE_SOURCE_DIR}/common ${VSCP_INCLUDE_DIRS} ${VSCP_COMPAT_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/linux .)
 
 # Find required packages
 find_package(Threads REQUIRED)
@@ -44,8 +44,8 @@ find_library(M_LIBRARY m)
 set(CAN232DRV_SOURCES
     ${CMAKE_SOURCE_DIR}/linux/vscpl1drv-can232.cpp
     ${CMAKE_SOURCE_DIR}/linux/can232obj.cpp
+    ${CMAKE_SOURCE_DIR}/common/com_macos.cpp
     ${CMAKE_SOURCE_DIR}/third-party/vscp/src/common/dllist.c
-    ${CMAKE_SOURCE_DIR}/third-party/vscp/src/common/com.cpp
 )
 
 set(CAN232DRV_HEADERS
@@ -57,7 +57,7 @@ set(CAN232DRV_HEADERS
 add_library(vscpl1drv-can232 SHARED ${CAN232DRV_SOURCES})
 
 # Set include directories for the target
-target_include_directories(vscpl1drv-can232 PRIVATE ${VSCP_INCLUDE_DIRS} ${VSCP_COMPAT_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/linux .)
+target_include_directories(vscpl1drv-can232 PRIVATE ${CMAKE_SOURCE_DIR}/common ${VSCP_INCLUDE_DIRS} ${VSCP_COMPAT_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/linux .)
 
 # Set version properties
 set_target_properties(vscpl1drv-can232 PROPERTIES
@@ -84,7 +84,7 @@ set_target_properties(vscpl1drv-can232-static PROPERTIES
     VERSION ${PROJECT_VERSION})
 
 # Set include directories for static target
-target_include_directories(vscpl1drv-can232-static PRIVATE ${VSCP_INCLUDE_DIRS} ${VSCP_COMPAT_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/linux .)
+target_include_directories(vscpl1drv-can232-static PRIVATE ${CMAKE_SOURCE_DIR}/common ${VSCP_INCLUDE_DIRS} ${VSCP_COMPAT_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/linux .)
 
 target_link_libraries(vscpl1drv-can232-static PRIVATE
     Threads::Threads
@@ -99,7 +99,7 @@ target_compile_definitions(vscpl1drv-can232-static PRIVATE
 # Optional: Build test executable
 if(BUILD_TESTS)
     add_executable(test ${CMAKE_SOURCE_DIR}/linux/test.cpp ${CAN232DRV_SOURCES})
-    target_include_directories(test PRIVATE ${VSCP_INCLUDE_DIRS} ${VSCP_COMPAT_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/linux .)
+    target_include_directories(test PRIVATE ${CMAKE_SOURCE_DIR}/common ${VSCP_INCLUDE_DIRS} ${VSCP_COMPAT_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/linux .)
     target_compile_definitions(test PRIVATE
         MAJOR_VERSION=${MAJOR_VERSION}
         MINOR_VERSION=${MINOR_VERSION}

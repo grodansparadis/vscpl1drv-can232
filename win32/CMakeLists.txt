@@ -31,9 +31,9 @@ add_definitions(-DWIN32 -D_WINDOWS)
 
 # Include directories - DLL version
 include_directories(
+    ../common
     ../third-party/vscp/src/vscp/common
     ../third-party/vscp/src/common
-    ../common
     .)
 
 # Find required packages
