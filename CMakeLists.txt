@@ -122,6 +122,17 @@ else()
     set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
 endif()
 
+# Apply build-time patches for VSCP library issues
+# Fix typo in VSCP com.cpp: iconst -> const (upstream issue)
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/.vscp_patched")
+    if(EXISTS "${CMAKE_SOURCE_DIR}/third-party/vscp/src/common/com.cpp")
+        file(READ "${CMAKE_SOURCE_DIR}/third-party/vscp/src/common/com.cpp" COM_CPP_CONTENT)
+        string(REPLACE "iconst char" "const char" COM_CPP_CONTENT "${COM_CPP_CONTENT}")
+        file(WRITE "${CMAKE_SOURCE_DIR}/third-party/vscp/src/common/com.cpp" "${COM_CPP_CONTENT}")
+        file(WRITE "${CMAKE_BINARY_DIR}/.vscp_patched" "patched")
+    endif()
+endif()
+
 # Set output directory for libraries
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
