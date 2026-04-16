@@ -74,7 +74,9 @@ if(WIN32)
     # NSIS installer configuration
     set(CPACK_NSIS_PACKAGE_NAME "VSCP CAN232 Driver")
     set(CPACK_NSIS_DISPLAY_NAME "VSCP CAN232 Driver ${FULL_VERSION}")
-    set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES\\VSCP\\drivers\\level1")
+    # Keep install root macro simple; package subdirectory is handled by CPACK_PACKAGE_INSTALL_DIRECTORY.
+    set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "VSCP/drivers/level1/vscpl1drv-can232")
     
     # NSIS Installer URL and contact information
     set(CPACK_NSIS_URL_INFO_ABOUT "https://github.com/vscp/vscpl1drv-can232")
@@ -92,9 +94,9 @@ if(WIN32)
     
     # Add registry entries for better Windows integration
     set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS 
-        "WriteRegStr HKCU 'Software\\\\VSCP\\\\CAN232Driver' 'InstallPath' '$INSTDIR'")
+        "WriteRegStr HKCU \"Software\\\\VSCP\\\\CAN232Driver\" \"InstallPath\" \"$INSTDIR\"")
     set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS 
-        "DeleteRegKey HKCU 'Software\\\\VSCP\\\\CAN232Driver'")
+        "DeleteRegKey HKCU \"Software\\\\VSCP\\\\CAN232Driver\"")
 elseif(APPLE)
     # macOS-specific packaging (Homebrew-friendly source/binary tarball)
     set(CPACK_GENERATOR "TGZ")
