@@ -62,8 +62,8 @@ Section "VSCP CAN232 Driver" SEC01
     File "dlldrvobj.h"
     
     SetOutPath "$INSTDIR\doc"
-    File "..\README.md"
-    File "..\LICENSE"
+    File "..\CMAKE_BUILD.md"
+    File "..\third-party\vscp\LICENSE"
     
     ; Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -97,7 +97,7 @@ Section Uninstall
     Delete "$INSTDIR\can232drv.a"
     Delete "$INSTDIR\include\can232obj.h"
     Delete "$INSTDIR\include\dlldrvobj.h"
-    Delete "$INSTDIR\doc\README.md"
+    Delete "$INSTDIR\doc\CMAKE_BUILD.md"
     Delete "$INSTDIR\doc\LICENSE"
     Delete "$INSTDIR\Uninstall.exe"
     

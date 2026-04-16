@@ -85,11 +85,6 @@ if(WIN32)
     set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
     set(CPACK_NSIS_MODIFY_PATH ON)
     
-    # Use custom NSIS script if available
-    if(EXISTS "${CMAKE_SOURCE_DIR}/win32/vscpl1drv-can232.nsi")
-        set(CPACK_NSIS_INSTALLER_ICON "${CMAKE_SOURCE_DIR}/win32/vscpl1drv-can232.nsi")
-    endif()
-    
     # NSIS installation instructions
     set(CPACK_NSIS_CREATE_ICONS_EXTRA "")
     set(CPACK_NSIS_DELETE_ICONS_EXTRA "")

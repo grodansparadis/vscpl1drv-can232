@@ -30,7 +30,8 @@ jobs:
       - name: Configure CMake
         shell: pwsh
         run: |
-          cmake -B build -S . -G "Visual Studio 17 2022" -A x64
+          cmake -B build -S . -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/stage"
 
       - name: Build
         shell: pwsh
@@ -38,7 +39,7 @@ jobs:
 
       - name: Install
         shell: pwsh
-        run: cmake --install build --config Release
+        run: cmake --install build --config Release --prefix "${{ github.workspace }}/stage"
 
       - name: Generate CPack packages (NSIS, ZIP)
         shell: pwsh
@@ -46,6 +47,16 @@ jobs:
         run: |
           cpack -G NSIS -C Release
           cpack -G ZIP -C Release
+
+      - name: Verify NSIS installer was created
+        shell: pwsh
+        run: |
+          $nsis = Get-ChildItem -Path build -Recurse -Filter *.exe |
+            Where-Object { $_.Name -like "vscpl1drv-can232-*.exe" }
+          if (-not $nsis) {
+            Write-Error "NSIS installer was not generated."
+          }
+          $nsis | ForEach-Object { Write-Host "NSIS installer: $($_.FullName)" }
 
       - name: Collect artifacts
         shell: pwsh
