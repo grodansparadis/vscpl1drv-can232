@@ -90,7 +90,6 @@ if(WIN32)
     # NSIS installation instructions
     set(CPACK_NSIS_CREATE_ICONS_EXTRA "")
     set(CPACK_NSIS_DELETE_ICONS_EXTRA "")
-    set(CPACK_NSIS_DEFINES "PRODUCT_VERSION=${FULL_VERSION}")
     
     # Keep NSIS customization minimal for CI reliability.
 elseif(APPLE)
