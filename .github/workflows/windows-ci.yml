@@ -51,10 +51,17 @@ jobs:
       - name: Verify NSIS installer was created
         shell: pwsh
         run: |
-          $nsis = Get-ChildItem -Path build -Recurse -Filter *.exe |
-            Where-Object { $_.Name -like "vscpl1drv-can232-*.exe" }
+          $nsis = Get-ChildItem -Path build -Recurse -File -Filter *.exe |
+            Where-Object {
+              $_.FullName -match "_CPack_Packages[\\/].*[\\/]NSIS[\\/]" -or
+              $_.Name -match "(?i)(vscpl1drv-can232|vscp.*can232).+\.exe$"
+            }
           if (-not $nsis) {
             Write-Error "NSIS installer was not generated."
+            Write-Host "Available EXE files under build/:"
+            Get-ChildItem -Path build -Recurse -File -Filter *.exe | ForEach-Object {
+              Write-Host " - $($_.FullName)"
+            }
           }
           $nsis | ForEach-Object { Write-Host "NSIS installer: $($_.FullName)" }
 
