@@ -101,17 +101,9 @@ if(WIN32)
     set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS 
         "DeleteRegKey HKCU 'Software\\\\VSCP\\\\CAN232Driver'")
 elseif(APPLE)
-    # macOS-specific packaging
-    set(CPACK_GENERATOR "DragDrop;TGZ;ProductBuild")
-    
-    # DragDrop (DMG) configuration
-    set(CPACK_DMG_VOLUME_NAME "VSCP CAN232 Driver")
-    set(CPACK_DMG_FORMAT "UDZO")
-    set(CPACK_DMG_COMPRESSION_LEVEL 9)
-    
-    # ProductBuild (PKG) configuration
-    set(CPACK_PRODUCTBUILD_IDENTIFIER "com.vscp.can232driver")
-    set(CPACK_PRODUCTBUILD_INSTALL_LOCATION "/usr/local/vscp/drivers/level1")
+    # macOS-specific packaging (Homebrew-friendly source/binary tarball)
+    set(CPACK_GENERATOR "TGZ")
+    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${FULL_VERSION}-macos")
 else()
     # Linux-specific packaging
     set(CPACK_GENERATOR "DEB;RPM;TGZ")
@@ -184,7 +176,7 @@ elseif(APPLE)
     message(STATUS "")
     message(STATUS "Next steps:")
     message(STATUS "1. Run: cmake --build build")
-    message(STATUS "2. Create DMG: cpack -G DragDrop")
+    message(STATUS "2. Create brew package tarball: cpack -G TGZ")
     message(STATUS "3. For details, see: CMAKE_MACOS.md")
 else()
     message(STATUS "")

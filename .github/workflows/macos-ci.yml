@@ -1,0 +1,68 @@
+name: macOS CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+      - name: Build
+        run: cmake --build build --config Release --parallel "$(sysctl -n hw.ncpu)"
+
+      - name: Install
+        run: cmake --install build --config Release
+
+      - name: Generate CPack package (TGZ for Homebrew)
+        working-directory: build
+        run: cpack -G TGZ
+
+      - name: Generate Homebrew formula
+        run: |
+          mkdir -p artifacts
+          PKG_FILE=$(ls build/*.tar.gz | head -1)
+          PKG_NAME=$(basename "$PKG_FILE")
+          PKG_SHA=$(shasum -a 256 "$PKG_FILE" | awk '{print $1}')
+          PKG_VERSION=$(echo "$PKG_NAME" | sed -E 's/^vscpl1drv-can232-([0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?).*$/\1/')
+          cat > artifacts/vscpl1drv-can232.rb <<EOF
+class Vscpl1drvCan232 < Formula
+  desc "VSCP Level I driver for CAN232 devices"
+  homepage "https://github.com/grodansparadis/vscpl1drv-can232"
+  url "https://github.com/grodansparadis/vscpl1drv-can232/releases/download/${GITHUB_REF_NAME}/${PKG_NAME}"
+  version "${PKG_VERSION}"
+  sha256 "${PKG_SHA}"
+
+  def install
+    lib.install Dir["lib/*"]
+    include.install Dir["include/*"] if Dir.exist?("include")
+  end
+end
+EOF
+          cp "$PKG_FILE" artifacts/
+          ls -lah artifacts
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscpl1drv-can232-macos-brew
+          path: artifacts/
+          retention-days: 30

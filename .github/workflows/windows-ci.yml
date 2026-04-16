@@ -1,0 +1,64 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up MSVC
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Install NSIS
+        shell: pwsh
+        run: choco install nsis --no-progress -y
+
+      - name: Configure CMake
+        shell: pwsh
+        run: |
+          cmake -B build -S . -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build --config Release --parallel 4
+
+      - name: Install
+        shell: pwsh
+        run: cmake --install build --config Release
+
+      - name: Generate CPack packages (NSIS, ZIP)
+        shell: pwsh
+        working-directory: build
+        run: |
+          cpack -G NSIS -C Release
+          cpack -G ZIP -C Release
+
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path artifacts -Force | Out-Null
+          Get-ChildItem -Path build -Recurse -Include *.exe,*.zip | ForEach-Object {
+            Copy-Item $_.FullName -Destination artifacts/ -Force
+          }
+          Get-ChildItem artifacts/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscpl1drv-can232-windows-packages
+          path: artifacts/
+          retention-days: 30
