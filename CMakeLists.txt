@@ -92,11 +92,7 @@ if(WIN32)
     set(CPACK_NSIS_DELETE_ICONS_EXTRA "")
     set(CPACK_NSIS_DEFINES "PRODUCT_VERSION=${FULL_VERSION}")
     
-    # Add registry entries for better Windows integration
-    set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS 
-        "WriteRegStr HKCU \"Software\\\\VSCP\\\\CAN232Driver\" \"InstallPath\" \"$INSTDIR\"")
-    set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS 
-        "DeleteRegKey HKCU \"Software\\\\VSCP\\\\CAN232Driver\"")
+    # Keep NSIS customization minimal for CI reliability.
 elseif(APPLE)
     # macOS-specific packaging (Homebrew-friendly source/binary tarball)
     set(CPACK_GENERATOR "TGZ")

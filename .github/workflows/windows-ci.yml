@@ -68,7 +68,7 @@ jobs:
           Write-Host "Running CPack NSIS..."
           cpack -G NSIS -C Release -B $pkgDir --verbose --debug
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "CPack NSIS generation failed with exit code $LASTEXITCODE"
+            Write-Host "CPack NSIS generation failed with exit code $LASTEXITCODE"
             Get-ChildItem -Path . -File -Filter "CPack*.cmake" | ForEach-Object { Write-Host "Config file: $($_.FullName)" }
             $nsisLogs = Get-ChildItem -Path $pkgDir -Recurse -File -Filter "NSISOutput.log" -ErrorAction SilentlyContinue
             if ($nsisLogs) {
@@ -78,6 +78,8 @@ jobs:
                 Get-Content -Path $_.FullName -Tail 200 | ForEach-Object { Write-Host $_ }
                 Write-Host "--- End NSISOutput.log ---"
               }
+            } else {
+              Write-Host "NSISOutput.log not found under $pkgDir"
             }
             exit $LASTEXITCODE
           }
