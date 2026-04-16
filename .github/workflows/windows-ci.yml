@@ -25,7 +25,23 @@ jobs:
 
       - name: Install NSIS
         shell: pwsh
-        run: choco install nsis --no-progress -y
+        run: |
+          choco install nsis --no-progress -y
+          $nsisPath = "${env:ProgramFiles(x86)}\NSIS"
+          if (Test-Path "$nsisPath\makensis.exe") {
+            "$nsisPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          }
+
+      - name: Verify NSIS toolchain
+        shell: pwsh
+        run: |
+          $mk = Get-Command makensis -ErrorAction SilentlyContinue
+          if (-not $mk) {
+            Write-Error "makensis.exe not found on PATH after NSIS installation."
+            exit 1
+          }
+          Write-Host "makensis path: $($mk.Source)"
+          & $mk.Source /VERSION
 
       - name: Configure CMake
         shell: pwsh
@@ -45,10 +61,27 @@ jobs:
         shell: pwsh
         working-directory: build
         run: |
+          $ErrorActionPreference = "Stop"
           $pkgDir = "${{ github.workspace }}/artifacts/packages"
           New-Item -ItemType Directory -Path $pkgDir -Force | Out-Null
-          cpack -G NSIS -C Release -B $pkgDir --verbose
-          cpack -G ZIP -C Release -B $pkgDir
+
+          Write-Host "Running CPack NSIS..."
+          cpack -G NSIS -C Release -B $pkgDir --verbose --debug
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "CPack NSIS generation failed with exit code $LASTEXITCODE"
+            Get-ChildItem -Path . -File -Filter "CPack*.cmake" | ForEach-Object { Write-Host "Config file: $($_.FullName)" }
+            exit $LASTEXITCODE
+          }
+
+          Write-Host "Running CPack ZIP..."
+          cpack -G ZIP -C Release -B $pkgDir --verbose
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "CPack ZIP generation failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+          }
+
+          Write-Host "CPack output files:"
+          Get-ChildItem -Path $pkgDir -Recurse -File | ForEach-Object { Write-Host " - $($_.FullName)" }
 
       - name: Locate NSIS installer output
         shell: pwsh
