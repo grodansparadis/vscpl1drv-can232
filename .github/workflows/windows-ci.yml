@@ -45,21 +45,20 @@ jobs:
         shell: pwsh
         working-directory: build
         run: |
-          cpack -G NSIS -C Release --verbose
-          cpack -G ZIP -C Release
+          $pkgDir = "${{ github.workspace }}/artifacts/packages"
+          New-Item -ItemType Directory -Path $pkgDir -Force | Out-Null
+          cpack -G NSIS -C Release -B $pkgDir --verbose
+          cpack -G ZIP -C Release -B $pkgDir
 
       - name: Locate NSIS installer output
         shell: pwsh
         run: |
-          $nsis = Get-ChildItem -Path build -Recurse -File -Filter *.exe |
-            Where-Object {
-              $_.FullName -match "_CPack_Packages[\\/].*[\\/]NSIS[\\/]" -or
-              $_.Name -match "(?i)^vscpl1drv-can232.*\.exe$"
-            }
+          $pkgDir = "${{ github.workspace }}/artifacts/packages"
+          $nsis = Get-ChildItem -Path $pkgDir -Recurse -File -Filter *.exe
           if (-not $nsis) {
-            Write-Warning "No NSIS installer found in expected CPack paths."
-            Write-Host "EXE files found under build/:"
-            Get-ChildItem -Path build -Recurse -File -Filter *.exe | ForEach-Object {
+            Write-Warning "No NSIS installer found in artifacts/packages."
+            Write-Host "EXE files found under artifacts/packages:"
+            Get-ChildItem -Path $pkgDir -Recurse -File -Filter *.exe | ForEach-Object {
               Write-Host " - $($_.FullName)"
             }
           } else {
@@ -69,20 +68,16 @@ jobs:
       - name: Collect artifacts
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Path artifacts -Force | Out-Null
-          Get-ChildItem -Path build -Recurse -File | Where-Object {
-            $_.Extension -in @('.exe', '.zip') -and (
-              $_.FullName -match "_CPack_Packages[\\/].*[\\/](NSIS|ZIP)[\\/]" -or
-              $_.Name -match "(?i)^vscpl1drv-can232.*\.(exe|zip)$"
-            )
+          $pkgDir = "${{ github.workspace }}/artifacts/packages"
+          Get-ChildItem -Path $pkgDir -Recurse -File | Where-Object {
+            $_.Extension -in @('.exe', '.zip')
           } | ForEach-Object {
-            Copy-Item $_.FullName -Destination artifacts/ -Force
+            Write-Host "Package: $($_.FullName)"
           }
-          Get-ChildItem artifacts/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: vscpl1drv-can232-windows-packages
-          path: artifacts/
+          path: artifacts/packages/
           retention-days: 30
