@@ -32,7 +32,7 @@ jobs:
         run: cmake --build build --config Release --parallel "$(nproc)"
 
       - name: Install
-        run: cmake --install build --config Release
+        run: cmake --install build --config Release --prefix "${{ github.workspace }}/stage"
 
       - name: Generate CPack packages (DEB, RPM, TGZ)
         working-directory: build

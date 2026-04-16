@@ -30,7 +30,7 @@ jobs:
         run: cmake --build build --config Release --parallel "$(sysctl -n hw.ncpu)"
 
       - name: Install
-        run: cmake --install build --config Release
+        run: cmake --install build --config Release --prefix "${{ github.workspace }}/stage"
 
       - name: Generate CPack package (TGZ for Homebrew)
         working-directory: build
@@ -43,20 +43,19 @@ jobs:
           PKG_NAME=$(basename "$PKG_FILE")
           PKG_SHA=$(shasum -a 256 "$PKG_FILE" | awk '{print $1}')
           PKG_VERSION=$(echo "$PKG_NAME" | sed -E 's/^vscpl1drv-can232-([0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?).*$/\1/')
-          cat > artifacts/vscpl1drv-can232.rb <<EOF
-class Vscpl1drvCan232 < Formula
-  desc "VSCP Level I driver for CAN232 devices"
-  homepage "https://github.com/grodansparadis/vscpl1drv-can232"
-  url "https://github.com/grodansparadis/vscpl1drv-can232/releases/download/${GITHUB_REF_NAME}/${PKG_NAME}"
-  version "${PKG_VERSION}"
-  sha256 "${PKG_SHA}"
-
-  def install
-    lib.install Dir["lib/*"]
-    include.install Dir["include/*"] if Dir.exist?("include")
-  end
-end
-EOF
+          printf '%s\n' \
+            'class Vscpl1drvCan232 < Formula' \
+            '  desc "VSCP Level I driver for CAN232 devices"' \
+            '  homepage "https://github.com/grodansparadis/vscpl1drv-can232"' \
+            "  url \"https://github.com/grodansparadis/vscpl1drv-can232/releases/download/${GITHUB_REF_NAME}/${PKG_NAME}\"" \
+            "  version \"${PKG_VERSION}\"" \
+            "  sha256 \"${PKG_SHA}\"" \
+            '' \
+            '  def install' \
+            '    lib.install Dir["lib/*"]' \
+            '    include.install Dir["include/*"] if Dir.exist?("include")' \
+            '  end' \
+            'end' > artifacts/vscpl1drv-can232.rb
           cp "$PKG_FILE" artifacts/
           ls -lah artifacts
 
