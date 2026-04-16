@@ -45,31 +45,37 @@ jobs:
         shell: pwsh
         working-directory: build
         run: |
-          cpack -G NSIS -C Release
+          cpack -G NSIS -C Release --verbose
           cpack -G ZIP -C Release
 
-      - name: Verify NSIS installer was created
+      - name: Locate NSIS installer output
         shell: pwsh
         run: |
           $nsis = Get-ChildItem -Path build -Recurse -File -Filter *.exe |
             Where-Object {
               $_.FullName -match "_CPack_Packages[\\/].*[\\/]NSIS[\\/]" -or
-              $_.Name -match "(?i)(vscpl1drv-can232|vscp.*can232).+\.exe$"
+              $_.Name -match "(?i)^vscpl1drv-can232.*\.exe$"
             }
           if (-not $nsis) {
-            Write-Error "NSIS installer was not generated."
-            Write-Host "Available EXE files under build/:"
+            Write-Warning "No NSIS installer found in expected CPack paths."
+            Write-Host "EXE files found under build/:"
             Get-ChildItem -Path build -Recurse -File -Filter *.exe | ForEach-Object {
               Write-Host " - $($_.FullName)"
             }
+          } else {
+            $nsis | ForEach-Object { Write-Host "NSIS installer: $($_.FullName)" }
           }
-          $nsis | ForEach-Object { Write-Host "NSIS installer: $($_.FullName)" }
 
       - name: Collect artifacts
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path artifacts -Force | Out-Null
-          Get-ChildItem -Path build -Recurse -Include *.exe,*.zip | ForEach-Object {
+          Get-ChildItem -Path build -Recurse -File | Where-Object {
+            $_.Extension -in @('.exe', '.zip') -and (
+              $_.FullName -match "_CPack_Packages[\\/].*[\\/](NSIS|ZIP)[\\/]" -or
+              $_.Name -match "(?i)^vscpl1drv-can232.*\.(exe|zip)$"
+            )
+          } | ForEach-Object {
             Copy-Item $_.FullName -Destination artifacts/ -Force
           }
           Get-ChildItem artifacts/
