@@ -126,26 +126,25 @@ if(MSVC)
 endif()
 
 # Installation for Windows
-# Typical Windows installation path: Program Files/VSCP drivers
-if(NOT VSCP_INSTALL_DIR)
-    if(CMAKE_INSTALL_PREFIX STREQUAL "/usr/local")
-        # If using default, set Windows-appropriate path
-        set(VSCP_INSTALL_DIR "C:/Program Files/VSCP/drivers/level1" CACHE PATH "VSCP installation directory")
-    else()
-        set(VSCP_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/drivers/level1" CACHE PATH "VSCP installation directory")
-    endif()
+# Keep package destinations relative to the install prefix so CPack can package NSIS artifacts.
+set(VSCP_WINDOWS_INSTALL_SUBDIR "drivers/level1" CACHE STRING
+    "Windows install subdirectory relative to CMAKE_INSTALL_PREFIX")
+
+if(IS_ABSOLUTE "${VSCP_WINDOWS_INSTALL_SUBDIR}")
+    message(FATAL_ERROR
+        "VSCP_WINDOWS_INSTALL_SUBDIR must be a relative path, got: ${VSCP_WINDOWS_INSTALL_SUBDIR}")
 endif()
 
 install(TARGETS can232drv
-    LIBRARY DESTINATION "${VSCP_INSTALL_DIR}"
-    RUNTIME DESTINATION "${VSCP_INSTALL_DIR}")
+    LIBRARY DESTINATION "${VSCP_WINDOWS_INSTALL_SUBDIR}"
+    RUNTIME DESTINATION "${VSCP_WINDOWS_INSTALL_SUBDIR}")
 
 if(MSVC)
     install(TARGETS can232drv-static
-        ARCHIVE DESTINATION "${VSCP_INSTALL_DIR}")
+        ARCHIVE DESTINATION "${VSCP_WINDOWS_INSTALL_SUBDIR}")
     
     install(FILES ${CMAKE_BINARY_DIR}/can232drv.pdb
-            DESTINATION "${VSCP_INSTALL_DIR}"
+            DESTINATION "${VSCP_WINDOWS_INSTALL_SUBDIR}"
             OPTIONAL)
 endif()
 
@@ -154,4 +153,5 @@ install(FILES ${COMMON_HEADERS}
     DESTINATION include)
 
 message(STATUS "Windows build configuration complete")
-message(STATUS "DLL will be installed to: ${VSCP_INSTALL_DIR}")
+message(STATUS "DLL install prefix: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "DLL install subdirectory: ${VSCP_WINDOWS_INSTALL_SUBDIR}")
