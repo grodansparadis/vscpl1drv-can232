@@ -79,6 +79,80 @@ jobs:
           PY
 
       - name: Upload SARIF results to GitHub code scanning
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: results-sarif
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import base64
+          import gzip
+          import json
+          import os
+          import pathlib
+          import sys
+          import time
+          import urllib.error
+          import urllib.request
+
+          api_url = os.environ["GITHUB_API_URL"]
+          repository = os.environ["GITHUB_REPOSITORY"]
+          token = os.environ["GITHUB_TOKEN"]
+          commit_sha = os.environ["GITHUB_SHA"]
+          ref = os.environ["GITHUB_REF"]
+          checkout_uri = pathlib.Path(os.environ["GITHUB_WORKSPACE"]).resolve().as_uri()
+
+          sarif_files = sorted(pathlib.Path("results-sarif").glob("*.sarif"))
+          if not sarif_files:
+              raise SystemExit("No SARIF files found in results-sarif")
+
+          headers = {
+              "Accept": "application/vnd.github+json",
+              "Authorization": "Bearer " + token,
+              "Content-Type": "application/json",
+              "User-Agent": "codacy-sarif-uploader",
+          }
+
+          def request_json(method, url, payload=None):
+              data = None if payload is None else json.dumps(payload).encode("utf-8")
+              request = urllib.request.Request(url, data=data, headers=headers, method=method)
+              try:
+                  with urllib.request.urlopen(request) as response:
+                      return json.load(response)
+              except urllib.error.HTTPError as exc:
+                  body = exc.read().decode("utf-8", errors="replace")
+                  print(body, file=sys.stderr)
+                  raise
+
+          def wait_for_processing(sarif_id):
+              status_url = f"{api_url}/repos/{repository}/code-scanning/sarifs/{sarif_id}"
+              while True:
+                  response = request_json("GET", status_url)
+                  status = response.get("processing_status")
+                  if status == "pending":
+                      time.sleep(5)
+                      continue
+                  return response
+
+          for sarif_file in sarif_files:
+              compressed = gzip.compress(sarif_file.read_bytes())
+              payload = {
+                  "commit_sha": commit_sha,
+                  "ref": ref,
+                  "checkout_uri": checkout_uri,
+                  "sarif": base64.b64encode(compressed).decode("ascii"),
+              }
+              response = request_json(
+                  "POST",
+                  f"{api_url}/repos/{repository}/code-scanning/sarifs",
+                  payload,
+              )
+              sarif_id = response["id"]
+              response = wait_for_processing(sarif_id)
+              if response.get("processing_status") != "complete":
+                  errors = response.get("errors", [])
+                  print(
+                      f"Code scanning rejected {sarif_file}: "
+                      f"{json.dumps(errors, indent=2)}",
+                      file=sys.stderr,
+                  )
+                  raise SystemExit(1)
+          PY
