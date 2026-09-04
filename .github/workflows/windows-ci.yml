@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -47,17 +47,7 @@ jobs:
       - name: Configure CMake
         shell: pwsh
         run: |
-          $cmakeHelp = & cmake --help
-          if ($cmakeHelp -match "Visual Studio 18 2026") {
-            $generator = "Visual Studio 18 2026"
-          } elseif ($cmakeHelp -match "Visual Studio 17 2022") {
-            $generator = "Visual Studio 17 2022"
-          } else {
-            Write-Error "No supported Visual Studio CMake generator found."
-            exit 1
-          }
-          Write-Host "Using CMake generator: $generator"
-          cmake -B build -S . -G $generator -A x64 `
+          cmake -B build -S . -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/stage"
 
       - name: Build
