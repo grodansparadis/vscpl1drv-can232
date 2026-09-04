@@ -124,10 +124,15 @@ jobs:
 
           def wait_for_processing(sarif_id):
               status_url = f"{api_url}/repos/{repository}/code-scanning/sarifs/{sarif_id}"
+              deadline = time.time() + 600
               while True:
                   response = request_json("GET", status_url)
                   status = response.get("processing_status")
                   if status == "pending":
+                      if time.time() >= deadline:
+                          raise SystemExit(
+                              f"Timed out waiting for code scanning to process SARIF upload {sarif_id}"
+                          )
                       time.sleep(5)
                       continue
                   return response
@@ -149,9 +154,11 @@ jobs:
               response = wait_for_processing(sarif_id)
               if response.get("processing_status") != "complete":
                   errors = response.get("errors", [])
+                  message = response.get("message")
                   print(
-                      f"Code scanning rejected {sarif_file}: "
-                      f"{json.dumps(errors, indent=2)}",
+                      f"Code scanning rejected {sarif_file} with status "
+                      f"{response.get('processing_status')}: "
+                      f"{json.dumps({'message': message, 'errors': errors}, indent=2)}",
                       file=sys.stderr,
                   )
                   raise SystemExit(1)
