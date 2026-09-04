@@ -35,6 +35,8 @@ jobs:
         run: |
           python3 - <<'PY'
           import json
+          import os
+          import tempfile
 
           sarif_path = "results.sarif"
           with open(sarif_path, "r", encoding="utf-8") as f:
@@ -45,8 +47,10 @@ jobs:
               automation_details["id"] = f"codacy-analysis-run-{run_index}"
               run["automationDetails"] = automation_details
 
-          with open(sarif_path, "w", encoding="utf-8") as f:
+          fd, temp_path = tempfile.mkstemp(dir=".", suffix=".sarif")
+          with os.fdopen(fd, "w", encoding="utf-8") as f:
               json.dump(sarif, f)
+          os.replace(temp_path, sarif_path)
           PY
 
       - name: Upload SARIF results to GitHub code scanning
