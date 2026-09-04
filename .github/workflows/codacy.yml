@@ -55,7 +55,8 @@ jobs:
           shutil.rmtree(output_dir, ignore_errors=True)
           os.mkdir(output_dir)
 
-          for file_index, start in enumerate(range(0, len(runs), max_runs_per_file), start=1):
+          chunk_starts = range(0, len(runs), max_runs_per_file) if runs else (0,)
+          for file_index, start in enumerate(chunk_starts, start=1):
               chunk = dict(sarif)
               chunk["runs"] = runs[start:start + max_runs_per_file]
 
