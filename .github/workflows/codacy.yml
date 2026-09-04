@@ -33,17 +33,21 @@ jobs:
 
       - name: Ensure unique SARIF categories per run
         run: |
-          jq '
-            .runs |= (
-              to_entries
-              | map(
-                  .key as $run_index
-                  | .value
-                  | .automationDetails = ((.automationDetails // {}) + { id: ("codacy-analysis-run-" + ($run_index | tostring)) })
-                )
-            )
-          ' results.sarif > results.with-categories.sarif
-          mv results.with-categories.sarif results.sarif
+          python3 - <<'PY'
+          import json
+
+          sarif_path = "results.sarif"
+          with open(sarif_path, "r", encoding="utf-8") as f:
+              sarif = json.load(f)
+
+          for run_index, run in enumerate(sarif.get("runs", [])):
+              automation_details = run.get("automationDetails", {})
+              automation_details["id"] = f"codacy-analysis-run-{run_index}"
+              run["automationDetails"] = automation_details
+
+          with open(sarif_path, "w", encoding="utf-8") as f:
+              json.dump(sarif, f)
+          PY
 
       - name: Upload SARIF results to GitHub code scanning
         uses: github/codeql-action/upload-sarif@v3
