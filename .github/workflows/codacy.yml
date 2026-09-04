@@ -61,13 +61,20 @@ jobs:
               chunk["runs"] = runs[start:start + max_runs_per_file]
 
               final_path = os.path.join(output_dir, f"results-{file_index}.sarif")
-              fd, temp_path = tempfile.mkstemp(dir=output_dir, suffix=".sarif")
+              temp_path = None
               try:
-                  with os.fdopen(fd, "w", encoding="utf-8") as f:
+                  with tempfile.NamedTemporaryFile(
+                      dir=output_dir,
+                      suffix=".sarif",
+                      mode="w",
+                      encoding="utf-8",
+                      delete=False,
+                  ) as f:
+                      temp_path = f.name
                       json.dump(chunk, f)
                   os.replace(temp_path, final_path)
               finally:
-                  if os.path.exists(temp_path):
+                  if temp_path and os.path.exists(temp_path):
                       os.remove(temp_path)
           PY
 
