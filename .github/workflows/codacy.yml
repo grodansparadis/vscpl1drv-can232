@@ -31,29 +31,42 @@ jobs:
           # Report all issues without failing the step; upload handles visibility
           max-allowed-issues: 2147483647
 
-      - name: Ensure unique SARIF categories per run
+      - name: Prepare SARIF chunks for GitHub code scanning
         run: |
           python3 - <<'PY'
           import json
           import os
+          import shutil
           import tempfile
 
           sarif_path = "results.sarif"
+          output_dir = "results-sarif"
+          max_runs_per_file = 20
+
           with open(sarif_path, "r", encoding="utf-8") as f:
               sarif = json.load(f)
 
-          for run_index, run in enumerate(sarif.get("runs", [])):
+          runs = sarif.get("runs", [])
+          for run_index, run in enumerate(runs):
               automation_details = run.get("automationDetails", {})
               automation_details["id"] = f"codacy-analysis-run-{run_index}"
               run["automationDetails"] = automation_details
 
-          fd, temp_path = tempfile.mkstemp(dir=".", suffix=".sarif")
-          with os.fdopen(fd, "w", encoding="utf-8") as f:
-              json.dump(sarif, f)
-          os.replace(temp_path, sarif_path)
+          shutil.rmtree(output_dir, ignore_errors=True)
+          os.mkdir(output_dir)
+
+          for file_index, start in enumerate(range(0, len(runs), max_runs_per_file), start=1):
+              chunk = dict(sarif)
+              chunk["runs"] = runs[start:start + max_runs_per_file]
+
+              final_path = os.path.join(output_dir, f"results-{file_index}.sarif")
+              fd, temp_path = tempfile.mkstemp(dir=output_dir, suffix=".sarif")
+              with os.fdopen(fd, "w", encoding="utf-8") as f:
+                  json.dump(chunk, f)
+              os.replace(temp_path, final_path)
           PY
 
       - name: Upload SARIF results to GitHub code scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: results.sarif
+          sarif_file: results-sarif
