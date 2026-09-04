@@ -62,9 +62,13 @@ jobs:
 
               final_path = os.path.join(output_dir, f"results-{file_index}.sarif")
               fd, temp_path = tempfile.mkstemp(dir=output_dir, suffix=".sarif")
-              with os.fdopen(fd, "w", encoding="utf-8") as f:
-                  json.dump(chunk, f)
-              os.replace(temp_path, final_path)
+              try:
+                  with os.fdopen(fd, "w", encoding="utf-8") as f:
+                      json.dump(chunk, f)
+                  os.replace(temp_path, final_path)
+              finally:
+                  if os.path.exists(temp_path):
+                      os.remove(temp_path)
           PY
 
       - name: Upload SARIF results to GitHub code scanning
