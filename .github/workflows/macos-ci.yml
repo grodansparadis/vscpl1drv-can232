@@ -19,6 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Configure CMake
         run: |
@@ -57,6 +58,12 @@ jobs:
             '  end' \
             'end' > artifacts/vscpl1drv-can232.rb
           cp "$PKG_FILE" artifacts/
+          cp "${PKG_FILE}.sha256" artifacts/ 2>/dev/null || true
+          # Digest files for artifacts CPack does not cover
+          (cd artifacts && for f in *; do
+            case "$f" in *.sha256) continue ;; esac
+            [ -f "$f.sha256" ] || shasum -a 256 "$f" > "$f.sha256"
+          done)
           ls -lah artifacts
 
       - name: Upload artifacts

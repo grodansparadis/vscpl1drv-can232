@@ -35,12 +35,14 @@ bool can232ToCanal(char * p, PCANALMSG pMsg);
 
 CCAN232Obj::CCAN232Obj()
 {
+    m_can232obj.m_bRun = false; // No worker thread yet
     m_can232obj.m_version = -1; // Version is unknown
     m_can232obj.m_bAuto = false; // Poll mode is default
     m_can232obj.m_cntRcv = 0; // No chars in receive buffer yet
     m_can232obj.m_state = CAN232_STATE_NONE;
     dll_init(&m_can232obj.m_rcvList, SORT_NONE);
     dll_init(&m_can232obj.m_sndList, SORT_NONE);
+    pthread_mutex_init(&m_can232ObjMutex, NULL);
 }
 
 CCAN232Obj::~CCAN232Obj()
@@ -48,6 +50,7 @@ CCAN232Obj::~CCAN232Obj()
     close(); // Close comm channel in case its open
     dll_removeAllNodes(&m_can232obj.m_rcvList);
     dll_removeAllNodes(&m_can232obj.m_sndList);
+    pthread_mutex_destroy(&m_can232ObjMutex);
 }
 
 
@@ -82,33 +85,32 @@ bool CCAN232Obj::open(const char *pDevice, unsigned long flags)
     unsigned char nSpeed = 4; // 125k
 
 
-    //----------------------------------------------------------------------
-    //	acquire Mutex
-    //----------------------------------------------------------------------
-    pthread_attr_t thread_attr;
-    pthread_attr_init(&thread_attr);
-    pthread_mutex_init(&m_can232ObjMutex, NULL);
-
-    m_can232obj.m_bRun = true;
-
     // if open we have noting to do
     if (0 != m_can232obj.m_comm.getFD()) return 0;
 
+    m_can232obj.m_bRun = true;
+
     //----------------------------------------------------------------------
-    //	Parse given parameters
+    //	Parse given parameters (work on a local copy; strtok_r is thread
+    //	safe and the caller's string is left untouched)
     //----------------------------------------------------------------------
+    char devParams[128];
+    devParams[0] = 0;
+    if (NULL != pDevice) snprintf(devParams, sizeof(devParams), "%s", pDevice);
+    char *saveptr = NULL;
+
     // Port
-    p = strtok((char *) pDevice, ";");
-    if (NULL != p) strncpy(modemDevice, p, strlen(p));
+    p = strtok_r(devParams, ";", &saveptr);
+    if (NULL != p) snprintf(modemDevice, sizeof(modemDevice), "%s", p);
 
     // Baudrate
-    p = strtok(NULL, ";");
+    p = strtok_r(NULL, ";", &saveptr);
     if (NULL != p) {
-        strncpy(nBaudRate, p, strlen(p));
+        snprintf(nBaudRate, sizeof(nBaudRate), "%s", p);
     }
 
     // Mask
-    p = strtok(NULL, ";");
+    p = strtok_r(NULL, ";", &saveptr);
     if (NULL != p) {
         if ((NULL != strstr(p, "0x")) || (NULL != strstr(p, "0X"))) {
             sscanf(p + 2, "%lx", &nMask);
@@ -118,7 +120,7 @@ bool CCAN232Obj::open(const char *pDevice, unsigned long flags)
     }
 
     // Filter
-    p = strtok(NULL, ";");
+    p = strtok_r(NULL, ";", &saveptr);
     if (NULL != p) {
         if ((NULL != strstr(p, "0x")) || (NULL != strstr(p, "0X"))) {
             sscanf(p + 2, "%lx", &nFilter);
@@ -128,15 +130,15 @@ bool CCAN232Obj::open(const char *pDevice, unsigned long flags)
     }
 
     // Bus-Speed
-    p = strtok(NULL, ";");
+    p = strtok_r(NULL, ";", &saveptr);
     if (NULL != p) busspeed = atol(p);
 
     // BTR0
-    p = strtok(NULL, ";");
+    p = strtok_r(NULL, ";", &saveptr);
     if (NULL != p) btr0 = atoi(p);
 
     // BTR1
-    p = strtok(NULL, ";");
+    p = strtok_r(NULL, ";", &saveptr);
     if (NULL != p) btr1 = atoi(p);
 
     //----------------------------------------------------------------------
@@ -381,17 +383,14 @@ bool CCAN232Obj::open(const char *pDevice, unsigned long flags)
     // Start thread
     //----------------------------------------------------------------------
     if (pthread_create(&m_threadId,
-            &thread_attr,
+            NULL,
             workThread,
             this)) {
-        rv = false;
-        close();
+        syslog(LOG_ERR, "can232obj: Failed to start worker thread\n");
+        m_can232obj.m_bRun = false;
+        m_can232obj.m_comm.close();
+        return false;
     }
-
-    //----------------------------------------------------------------------
-    // Release the mutex for other threads to use
-    //----------------------------------------------------------------------
-    pthread_mutex_unlock(&m_can232ObjMutex);
 
     return rv;
 }
@@ -405,30 +404,16 @@ int CCAN232Obj::close(void)
 {
     int rv = 0;
 
-    // Do nothing if already terminated
-    if (!m_can232obj.m_bRun) return 1;
+    // Do nothing if already terminated (exchange makes concurrent close safe)
+    if (!m_can232obj.m_bRun.exchange(false)) return 1;
 
-    // Terminate the thread
-    m_can232obj.m_bRun = false;
-
-    UNLOCK_MUTEX(m_can232ObjMutex);
-    LOCK_MUTEX(m_can232ObjMutex);
+    // Wait for the worker thread to terminate before touching the port
+    pthread_join(m_threadId, NULL);
 
     char buf[] = "C\r";
     if (m_can232obj.m_comm.comm_puts(buf, strlen(buf), true)) {
         rv = 1;
     }
-
-    // Give the worker thread some time to terminate
-#ifdef WIN32
-	Sleep( 1000 );
-#else
-	sleep( 1 );
-#endif
-
-    int *trv;
-    pthread_join(m_threadId, (void **) &trv);
-    pthread_mutex_destroy(&m_can232ObjMutex);
 
     m_can232obj.m_comm.close();
     syslog(LOG_ERR, "can232obj: close port\n");
@@ -444,29 +429,28 @@ int CCAN232Obj::writeMsg(PCANALMSG pCanalMsg)
 {
     int rv = 0;
 
-    // Must be room for the message
+    if (NULL == pCanalMsg) return rv;
+
+    dllnode *pNode = new dllnode;
+    canalMsg *pnewMsg = new canalMsg;
+    pNode->pObject = pnewMsg;
+    pNode->pKey = NULL;
+    pNode->pstrKey = NULL;
+    memcpy(pnewMsg, pCanalMsg, sizeof( canalMsg));
+
+    // The room-for-message check must be done under the lock
+    LOCK_MUTEX(m_can232ObjMutex);
     if (m_can232obj.m_sndList.nCount < CAN232_MAX_SNDMSG) {
-        if (NULL != pCanalMsg) {
-            dllnode *pNode = new dllnode;
-            if (NULL != pNode) {
-                canalMsg *pnewMsg = new canalMsg;
-                pNode->pObject = pnewMsg;
-                pNode->pKey = NULL;
-                pNode->pstrKey = NULL;
-                if (NULL != pnewMsg) {
-                    memcpy(pnewMsg, pCanalMsg, sizeof( canalMsg));
-                }
-
-                LOCK_MUTEX(m_can232ObjMutex);
-
-                dll_addNode(&m_can232obj.m_sndList, pNode);
-
-                UNLOCK_MUTEX(m_can232ObjMutex);
-
-                rv = true;
-            }
-        }
+        dll_addNode(&m_can232obj.m_sndList, pNode);
+        rv = true;
     }
+    UNLOCK_MUTEX(m_can232ObjMutex);
+
+    if (!rv) {
+        delete pnewMsg;
+        delete pNode;
+    }
+
     return rv;
 }
 
@@ -478,18 +462,19 @@ int CCAN232Obj::readMsg(canalMsg *pMsg)
 {
     int rv = false;
 
+    // The queue-empty check must be done under the lock
+    LOCK_MUTEX(m_can232ObjMutex);
+
     if ((NULL != m_can232obj.m_rcvList.pHead) &&
             (NULL != m_can232obj.m_rcvList.pHead->pObject)) {
-
-        LOCK_MUTEX(m_can232ObjMutex);
 
         memcpy(pMsg, m_can232obj.m_rcvList.pHead->pObject, sizeof( canalMsg));
         dll_removeNode(&m_can232obj.m_rcvList, m_can232obj.m_rcvList.pHead);
 
-        UNLOCK_MUTEX(m_can232ObjMutex);
-
         rv = true;
     }
+
+    UNLOCK_MUTEX(m_can232ObjMutex);
 
     return rv;
 }
@@ -622,8 +607,6 @@ bool CCAN232Obj::getStatus(PCANALSTATUS pCanalStatus)
 
 void *workThread(void *pObject)
 {
-    int rv = 0;
-    
     bool bActivity = true;
     short nPollCnt = 0;
     //char szResponse[ 32 ];
@@ -632,7 +615,7 @@ void *workThread(void *pObject)
 
     CCAN232Obj * pcan232obj = (CCAN232Obj *) pObject;
     if (NULL == pcan232obj) {
-        pthread_exit(&rv);
+        pthread_exit(NULL);
     }
 
     while (pcan232obj->m_can232obj.m_bRun) {
@@ -644,7 +627,10 @@ void *workThread(void *pObject)
         LOCK_MUTEX(pcan232obj->m_can232ObjMutex);
 
         // Noting to do if we should end...
-        if (!pcan232obj->m_can232obj.m_bRun) continue;
+        if (!pcan232obj->m_can232obj.m_bRun) {
+            UNLOCK_MUTEX(pcan232obj->m_can232ObjMutex);
+            break;
+        }
 
         int cnt;
         unsigned char c;
@@ -715,6 +701,7 @@ void *workThread(void *pObject)
         ///////////////////////////////////////////////////////////////////////
 
         //printf("workThread - Transmit\n");
+        bool bSent = false;
         LOCK_MUTEX(pcan232obj->m_can232ObjMutex);
 
         // Is there something to transmit
@@ -771,18 +758,26 @@ void *workThread(void *pObject)
             }
             printf("]\n");
             printf("workThread T - Read  [");
-            
-            do{
+
+            int ackRetries = 0;
+            do {
                 c = pcan232obj->m_can232obj.m_comm.readChar(&cnt);
+                if (-1 == cnt) {
+                    // Give the adapter up to ~1 s to answer, then give up so
+                    // the mutex is not held forever
+                    if (++ackRetries > 100) break;
+                    SLEEP(10);
+                    continue;
+                }
+                ackRetries = 0;
                 if (c == 0x0D) {
                     printf("[CR]");
                 } else {
                     printf("%c", c);
                 }
-            } while(c != 0x0D);
+            } while (c != 0x0D && pcan232obj->m_can232obj.m_bRun);
             printf("]\n\n");
-            // needed !! At least at 19200 baud
-            SLEEP(100);
+            bSent = true;
 
             // Update statistics
             pcan232obj->m_can232obj.m_stat.cntTransmitData += msg.sizeData;
@@ -803,11 +798,14 @@ void *workThread(void *pObject)
 
         UNLOCK_MUTEX(pcan232obj->m_can232ObjMutex);
 
+        // Pacing delay outside the lock. Needed !! At least at 19200 baud
+        if (bSent) SLEEP(100);
+
         if (!bActivity) SLEEP(100);
         bActivity = false;
 
     } // while( pcan232obj->m_can232obj.m_bRun )
-    pthread_exit(&rv);
+    pthread_exit(NULL);
 }
 
 

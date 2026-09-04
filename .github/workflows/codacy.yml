@@ -1,0 +1,37 @@
+name: Codacy Analysis
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  codacy-analysis:
+    name: Codacy Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Codacy Analysis CLI
+        uses: codacy/codacy-analysis-cli-action@562ee3e92b8e92df8b67e0a5ff8aa8e261919c08 # v4.4.7
+        with:
+          # Optional: set CODACY_PROJECT_TOKEN in repo secrets to sync results with Codacy
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          verbose: true
+          output: results.sarif
+          format: sarif
+          # Make SARIF output compatible with GitHub code scanning
+          gh-code-scanning-compat: true
+          # Report all issues without failing the step; upload handles visibility
+          max-allowed-issues: 2147483647
+
+      - name: Upload SARIF results to GitHub code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif

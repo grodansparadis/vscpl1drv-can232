@@ -19,9 +19,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Set up MSVC
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
 
       - name: Install NSIS
         shell: pwsh
@@ -114,10 +115,19 @@ jobs:
           New-Item -ItemType Directory -Path artifacts -Force | Out-Null
           $pkgDir = "${{ github.workspace }}/artifacts/packages"
           Get-ChildItem -Path $pkgDir -File | Where-Object {
-            $_.Extension -in @('.exe', '.zip')
+            $_.Extension -in @('.exe', '.zip', '.sha256')
           } | ForEach-Object {
             Copy-Item $_.FullName -Destination artifacts/ -Force
             Write-Host "Package: $($_.Name)"
+          }
+
+          # Digest files for any artifact CPack did not cover
+          Get-ChildItem -Path artifacts -File | Where-Object {
+            $_.Extension -ne '.sha256' -and -not (Test-Path "$($_.FullName).sha256")
+          } | ForEach-Object {
+            $hash = (Get-FileHash -Algorithm SHA256 $_.FullName).Hash.ToLower()
+            "$hash  $($_.Name)" | Out-File -FilePath "$($_.FullName).sha256" -Encoding ascii -NoNewline
+            Write-Host "Digest: $($_.Name).sha256"
           }
 
           $artifactFiles = Get-ChildItem -Path artifacts -File | Where-Object { $_.Extension -in @('.exe', '.zip') }

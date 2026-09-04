@@ -1,13 +1,27 @@
 cmake_minimum_required(VERSION 3.10)
 
-# Centralized project version (VERSION.m4 removed)
-set(MAJOR_VERSION "1")
-set(MINOR_VERSION "1")
-set(RELEASE_VERSION "1")
+# Calendar versioning: YY.MM.patch
+# Year/month are taken from the build date; patch is the git commit
+# count so all three parts refresh on every push.
+string(TIMESTAMP MAJOR_VERSION "%y")
+string(TIMESTAMP MINOR_VERSION "%m")
+
+find_package(Git QUIET)
+if(GIT_EXECUTABLE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" rev-list --count HEAD
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE RELEASE_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+endif()
+if(NOT RELEASE_VERSION)
+    set(RELEASE_VERSION "0")
+endif()
 set(BUILD_VERSION "0")
 
 set(PACKAGE_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_VERSION}")
-set(FULL_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_VERSION}.${BUILD_VERSION}")
+set(FULL_VERSION "${PACKAGE_VERSION}")
 
 project(vscpl1drv-can232 
         VERSION ${PACKAGE_VERSION}
@@ -51,6 +65,8 @@ set(VSCP_INSTALL_DIR "${DESTDIR}${CMAKE_INSTALL_PREFIX}" CACHE PATH "VSCP instal
 set(CPACK_PACKAGE_NAME "vscpl1drv-can232")
 set(CPACK_PACKAGE_VENDOR "VSCP")
 set(CPACK_PACKAGE_VERSION "${FULL_VERSION}")
+# Generate a .sha256 digest file next to every package
+set(CPACK_PACKAGE_CHECKSUM "SHA256")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "VSCP Level I driver for CAN232 devices")
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
     set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
@@ -103,11 +119,30 @@ else()
     set(CPACK_DEBIAN_PACKAGE_SECTION "libs")
     set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "libvscp1 (>= 1.0.0)")
-    set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
     # RPM packaging
     set(CPACK_RPM_PACKAGE_REQUIRES "libvscp1 >= 1.0.0")
     set(CPACK_RPM_PACKAGE_LICENSE "MIT")
-    set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
+    # Use "x64" instead of "amd64"/"x86_64" in package file names
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
+        set(CPACK_DEBIAN_FILE_NAME "${CPACK_PACKAGE_NAME}_${FULL_VERSION}_x64.deb")
+        set(CPACK_RPM_FILE_NAME "${CPACK_PACKAGE_NAME}-${FULL_VERSION}-Linux-x64.rpm")
+        set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${FULL_VERSION}-Linux-x64")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
+        set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "arm64")
+        set(CPACK_DEBIAN_FILE_NAME "${CPACK_PACKAGE_NAME}_${FULL_VERSION}_arm64.deb")
+        set(CPACK_RPM_PACKAGE_ARCHITECTURE "aarch64")
+        set(CPACK_RPM_FILE_NAME "${CPACK_PACKAGE_NAME}-${FULL_VERSION}-Linux-arm64.rpm")
+        set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${FULL_VERSION}-Linux-arm64")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm|armv6l|armv7l|armhf)$")
+        set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "armhf")
+        set(CPACK_DEBIAN_FILE_NAME "${CPACK_PACKAGE_NAME}_${FULL_VERSION}_armhf.deb")
+        set(CPACK_RPM_PACKAGE_ARCHITECTURE "armv7hl")
+        set(CPACK_RPM_FILE_NAME "${CPACK_PACKAGE_NAME}-${FULL_VERSION}-Linux-armhf.rpm")
+        set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${FULL_VERSION}-Linux-armhf")
+    else()
+        set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
+        set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
+    endif()
 endif()
 
 # Apply build-time patches for VSCP library issues

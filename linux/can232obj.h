@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <syslog.h>
+#include <atomic>
 
 #include <canal.h>
 #include <vscp.h>
@@ -60,9 +61,9 @@
 struct _can232obj {
 
 	/*!
-		Work flag for thread
+		Work flag for thread (atomic: written by close(), read by worker)
 	*/
-	bool m_bRun;
+	std::atomic<bool> m_bRun;
 	
 	/*!
 		The RS232 communication channel

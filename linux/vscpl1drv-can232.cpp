@@ -63,8 +63,6 @@ CCan232drvdllApp::CCan232drvdllApp ()
     {
       m_objArray[ i ] = NULL;
     }
-
-  UNLOCK_MUTEX (m_objMutex);
 }
 
 CCan232drvdllApp::~CCan232drvdllApp ()
@@ -76,14 +74,9 @@ CCan232drvdllApp::~CCan232drvdllApp ()
 
       if (NULL != m_objArray[ i ])
         {
-          CCAN232Obj *pCAN232Obj = getDriverObject (i);
-
-          if (NULL != pCAN232Obj)
-            {
-              pCAN232Obj->close ();
-              delete m_objArray[ i ];
-              m_objArray[ i ] = NULL;
-            }
+          m_objArray[ i ]->close ();
+          delete m_objArray[ i ];
+          m_objArray[ i ] = NULL;
         }
     }
 
@@ -142,12 +135,18 @@ CCan232drvdllApp::addDriverObject (CCAN232Obj *pobj)
 CCAN232Obj *
 CCan232drvdllApp::getDriverObject (long h)
 {
+  CCAN232Obj *pobj = NULL;
   long idx = h - 1681;
 
   // Check if valid handle
   if (idx < 0) return NULL;
   if (idx >= CANAL_CAN232_DRIVER_MAX_OPEN) return NULL;
-  return m_objArray[ idx ];
+
+  LOCK_MUTEX (m_objMutex);
+  pobj = m_objArray[ idx ];
+  UNLOCK_MUTEX (m_objMutex);
+
+  return pobj;
 }
 
 
@@ -164,10 +163,18 @@ CCan232drvdllApp::removeDriverObject (long h)
   if (idx < 0) return;
   if (idx >= CANAL_CAN232_DRIVER_MAX_OPEN) return;
 
+  // Detach under the lock so no new lookups can see the object,
+  // then close/delete outside the lock (close joins the worker thread)
   LOCK_MUTEX (m_objMutex);
-  if (NULL != m_objArray[ idx ]) delete m_objArray[ idx ];
+  CCAN232Obj *pobj = m_objArray[ idx ];
   m_objArray[ idx ] = NULL;
   UNLOCK_MUTEX (m_objMutex);
+
+  if (NULL != pobj)
+    {
+      pobj->close ();
+      delete pobj;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -176,7 +183,9 @@ CCan232drvdllApp::removeDriverObject (long h)
 BOOL
 CCan232drvdllApp::InitInstance ()
 {
+  LOCK_MUTEX (m_objMutex);
   m_instanceCounter++;
+  UNLOCK_MUTEX (m_objMutex);
   return TRUE;
 }
 
@@ -223,7 +232,8 @@ CanalClose (long handle)
   CCAN232Obj *pobj = theApp.getDriverObject (handle);
   if (NULL == pobj) return 0;
 
-  pobj->close ();
+  // removeDriverObject() closes and deletes the object; detaching it from
+  // the handle table first prevents new lookups from racing the delete
   theApp.removeDriverObject (handle);
 
   return CANAL_ERROR_SUCCESS;
