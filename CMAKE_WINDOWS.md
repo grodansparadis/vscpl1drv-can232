@@ -11,7 +11,7 @@ This guide covers building vscpl1drv-can232 on Windows using CMake.
 
 ### Optional
 - **Pandoc** - for generating man pages (optional)
-- **Git** - for managing submodules
+- **Git** - for cloning the repository
 
 ## Installation
 
@@ -35,9 +35,6 @@ choco install mingw
 
 #### Option 1: Visual Studio IDE
 ```bash
-# Initialize submodules
-git submodule update --init --recursive
-
 # Create and open Visual Studio project
 mkdir build
 cd build
@@ -48,9 +45,6 @@ cmake .. -G "Visual Studio 17 2022" -A x64
 
 #### Option 2: Command Line (MSVC)
 ```bash
-# Initialize submodules
-git submodule update --init --recursive
-
 # Configure and build
 mkdir build
 cd build
@@ -68,9 +62,6 @@ This clears a broken externally-injected toolchain setting for the current confi
 
 #### Option 3: Command Line (MinGW)
 ```bash
-# Initialize submodules
-git submodule update --init --recursive
-
 # Configure and build
 mkdir build
 cd build
@@ -186,16 +177,13 @@ In PowerShell, clear for current session with:
 Remove-Item Env:CMAKE_TOOLCHAIN_FILE -ErrorAction SilentlyContinue
 ```
 
-### "VSCP submodule is missing"
-**Solution**:
-```bash
-git submodule update --init --recursive
-```
+### "VSCP sources not found"
+**Solution**: CMake downloads the VSCP sources on the first configure. Check the
+network connection, delete the build directory and configure again.
 
 ### "Missing header files"
-**Solution**: Ensure submodules are initialized:
+**Solution**: Reconfigure from a clean build directory so the VSCP sources are fetched again:
 ```bash
-git submodule update --init --recursive
 rm -rf build
 mkdir build && cd build
 cmake ..
@@ -335,8 +323,7 @@ cpack -G ZIP
 
 1. **Out-of-source builds**: Always use a `build/` directory
 2. **Separate Debug/Release**: Use different build directories
-3. **Always initialize submodules**: `git submodule update --init --recursive`
-4. **Use presets for consistency**: `cmake --preset` (see CMakePresets.json)
+3. **Use presets for consistency**: `cmake --preset` (see CMakePresets.json)
 
 ## Next Steps
 

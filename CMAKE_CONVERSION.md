@@ -56,8 +56,8 @@ vscpl1drv-can232/
 
 ### Build in 2 Steps
 ```bash
-# Initialize submodules and create build directory
-bash setup.sh
+# Configure
+cmake -B build -S .
 
 # Build
 cmake --build build
@@ -84,12 +84,10 @@ sudo cmake --install build --prefix /var/lib/vscp
 
 ## Important Notes
 
-### VSCP Submodule Required
-This project depends on the VSCP library as a Git submodule. The `setup.sh` script initializes it automatically, or do it manually:
-
-```bash
-git submodule update --init --recursive
-```
+### VSCP Library
+This project depends on the VSCP library. CMake downloads its sources at configure
+time with FetchContent (see `cmake/dependencies.cmake`); the first configure needs
+network access.
 
 ### Build Directories
 CMake uses out-of-source builds by default:
@@ -236,10 +234,9 @@ sudo apt-get install cmake
 brew install cmake
 ```
 
-### Submodule error
-```bash
-git submodule update --init --recursive
-```
+### VSCP sources not found
+CMake downloads the VSCP sources on the first configure. Check the network
+connection, delete the build directory and configure again.
 
 ### Clean rebuild needed
 ```bash

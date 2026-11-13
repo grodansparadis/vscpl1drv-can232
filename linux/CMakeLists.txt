@@ -16,8 +16,8 @@ endif()
 
 # Define VSCP include paths
 set(VSCP_INCLUDE_DIRS
-    ${CMAKE_SOURCE_DIR}/third-party/vscp/src/vscp/common
-    ${CMAKE_SOURCE_DIR}/third-party/vscp/src/common
+    ${THIRD_PARTY_VSCP_DIR}/src/vscp/common
+    ${THIRD_PARTY_VSCP_DIR}/src/common
 )
 
 # Create compatibility headers for naming differences (underscores vs hyphens)
@@ -41,8 +41,8 @@ find_library(M_LIBRARY m)
 set(CAN232DRV_SOURCES
     vscpl1drv-can232.cpp
     can232obj.cpp
-    ${CMAKE_SOURCE_DIR}/third-party/vscp/src/common/dllist.c
-    ${CMAKE_SOURCE_DIR}/third-party/vscp/src/common/com.cpp
+    ${THIRD_PARTY_VSCP_DIR}/src/common/dllist.c
+    ${THIRD_PARTY_VSCP_DIR}/src/common/com.cpp
 )
 
 set(CAN232DRV_HEADERS

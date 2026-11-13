@@ -40,9 +40,6 @@ Download from https://cmake.org/download/ and follow the macOS installation inst
 
 #### Option 1: Command Line (Recommended)
 ```bash
-# Initialize submodules
-git submodule update --init --recursive
-
 # Debug build
 mkdir build && cd build
 cmake ..
@@ -242,11 +239,9 @@ brew install cmake
 export PATH="/Applications/CMake.app/Contents/bin:$PATH"
 ```
 
-### "VSCP submodule is missing"
-**Solution**:
-```bash
-git submodule update --init --recursive
-```
+### "VSCP sources not found"
+**Solution**: CMake downloads the VSCP sources on the first configure. Check the
+network connection, delete the build directory and configure again.
 
 ### "Xcode Command Line Tools not installed"
 **Solution**:
@@ -329,9 +324,8 @@ codesign -v build/lib/libvscpl1drv-can232.dylib
 
 1. **Use presets for consistency**: `cmake --preset=macos-release`
 2. **Separate build directories**: Keep debug and release builds separate
-3. **Always initialize submodules**: `git submodule update --init --recursive`
-4. **Universal binaries for distribution**: Build for both arm64 and x86_64
-5. **Check dependencies before installing**: `otool -L libname.dylib`
+3. **Universal binaries for distribution**: Build for both arm64 and x86_64
+4. **Check dependencies before installing**: `otool -L libname.dylib`
 6. **Use Homebrew for dependencies**: Easier to maintain and update
 
 ## Performance Optimization

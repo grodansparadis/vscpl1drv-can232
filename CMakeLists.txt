@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
 # Calendar versioning: YY.MM.patch
 # Year/month are taken from the build date; patch is the git commit
@@ -28,14 +28,12 @@ project(vscpl1drv-can232
         DESCRIPTION "VSCP Level I driver for CAN232 devices"
         LANGUAGES C CXX)
 
-# Check for VSCP submodule
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third-party/vscp/src/common/dllist.c")
-    message(FATAL_ERROR
-        "VSCP submodule is required but not initialized.\n"
-        "Please run the following command from the project root:\n"
-        "  git submodule update --init --recursive\n"
-        "Or use the setup script:\n"
-        "  ./setup.sh")
+# Third-party sources (formerly git submodules)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake)
+
+# Check that the VSCP sources were fetched
+if(NOT EXISTS "${THIRD_PARTY_VSCP_DIR}/src/common/dllist.c")
+    message(FATAL_ERROR "VSCP sources not found in ${THIRD_PARTY_VSCP_DIR}")
 endif()
 
 # Set C++ standard
@@ -76,8 +74,8 @@ endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
     set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third-party/vscp/LICENSE")
-    set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/third-party/vscp/LICENSE")
+elseif(EXISTS "${THIRD_PARTY_VSCP_DIR}/LICENSE")
+    set(CPACK_RESOURCE_FILE_LICENSE "${THIRD_PARTY_VSCP_DIR}/LICENSE")
 endif()
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "vscpl1drv-can232")
 set(CPACK_STRIP_FILES TRUE)
@@ -148,10 +146,10 @@ endif()
 # Apply build-time patches for VSCP library issues
 # Fix typo in VSCP com.cpp: iconst -> const (upstream issue)
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/.vscp_patched")
-    if(EXISTS "${CMAKE_SOURCE_DIR}/third-party/vscp/src/common/com.cpp")
-        file(READ "${CMAKE_SOURCE_DIR}/third-party/vscp/src/common/com.cpp" COM_CPP_CONTENT)
+    if(EXISTS "${THIRD_PARTY_VSCP_DIR}/src/common/com.cpp")
+        file(READ "${THIRD_PARTY_VSCP_DIR}/src/common/com.cpp" COM_CPP_CONTENT)
         string(REPLACE "iconst char" "const char" COM_CPP_CONTENT "${COM_CPP_CONTENT}")
-        file(WRITE "${CMAKE_SOURCE_DIR}/third-party/vscp/src/common/com.cpp" "${COM_CPP_CONTENT}")
+        file(WRITE "${THIRD_PARTY_VSCP_DIR}/src/common/com.cpp" "${COM_CPP_CONTENT}")
         file(WRITE "${CMAKE_BINARY_DIR}/.vscp_patched" "patched")
     endif()
 endif()

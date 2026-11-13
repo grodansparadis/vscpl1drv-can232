@@ -4,20 +4,12 @@ This project has been converted from an Autotools-based build system to CMake.
 
 ## Prerequisites
 
-This project depends on the VSCP library. You need to initialize the VSCP submodule first:
-
-```bash
-git submodule update --init --recursive
-```
-
-This will download the VSCP library source code required to build the driver.
+This project depends on the VSCP library. CMake downloads its sources at configure
+time with FetchContent (see `cmake/dependencies.cmake`), so the first configure needs
+network access. To use a local vscp checkout instead, add
+`-DFETCHCONTENT_SOURCE_DIR_TP_VSCP=/path/to/vscp` to the cmake command.
 
 ## Quick Start
-
-### Initialize dependencies
-```bash
-git submodule update --init --recursive
-```
 
 ### Build (Debug)
 ```bash

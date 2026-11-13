@@ -7,6 +7,7 @@ tagged, rename **Unreleased** to the version and date, and start a new
 
 ## Unreleased
 
+- Replace the third-party/vscp git submodule with CMake FetchContent (same pinned commit)
 - Add scripts/download-artifacts.sh to download and verify the newest CI build artifacts
 - CI writes a SHA256SUMS-<artifact> checksum file into every uploaded build artifact
 - Fixed tests (991f1aa)

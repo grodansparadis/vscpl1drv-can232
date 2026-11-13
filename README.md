@@ -17,10 +17,11 @@ Releases use calendar versioning: `YY.MM.patch` where the patch number increases
 
 ## Building
 
-The project is built with CMake (3.10+). The VSCP submodule must be initialized first:
+The project is built with CMake (3.16+). The VSCP library sources are downloaded
+by CMake at configure time (see `cmake/dependencies.cmake`), so the first configure
+needs network access:
 
 ```bash
-./setup.sh                 # or: git submodule update --init --recursive
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```

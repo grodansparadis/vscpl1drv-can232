@@ -32,8 +32,8 @@ add_definitions(-DWIN32 -D_WINDOWS)
 # Include directories - DLL version
 include_directories(
     ../common
-    ../third-party/vscp/src/vscp/common
-    ../third-party/vscp/src/common
+    ${THIRD_PARTY_VSCP_DIR}/src/vscp/common
+    ${THIRD_PARTY_VSCP_DIR}/src/common
     .)
 
 # Find required packages
@@ -44,7 +44,7 @@ set(COMMON_SOURCES
     ../common/dlldrvobj.cpp
     ../common/can232obj.cpp
     ../common/com_win32.cpp
-    ../third-party/vscp/src/common/dllist.c
+    ${THIRD_PARTY_VSCP_DIR}/src/common/dllist.c
 )
 
 set(COMMON_HEADERS
@@ -77,8 +77,8 @@ set_target_properties(can232drv PROPERTIES
 
 # Set include directories for DLL target
 target_include_directories(can232drv PRIVATE
-    ../third-party/vscp/src/vscp/common
-    ../third-party/vscp/src/common
+    ${THIRD_PARTY_VSCP_DIR}/src/vscp/common
+    ${THIRD_PARTY_VSCP_DIR}/src/common
     ../common
     ${VSCP_COMPAT_INCLUDE_DIR}
     .)
@@ -106,8 +106,8 @@ if(MSVC)
         VERSION ${PROJECT_VERSION})
     
     target_include_directories(can232drv-static PRIVATE
-        ../third-party/vscp/src/vscp/common
-        ../third-party/vscp/src/common
+        ${THIRD_PARTY_VSCP_DIR}/src/vscp/common
+        ${THIRD_PARTY_VSCP_DIR}/src/common
         ../common
         ${VSCP_COMPAT_INCLUDE_DIR}
         .)
