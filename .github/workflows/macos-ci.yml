@@ -70,7 +70,7 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          bash .github/scripts/write-sha256sums.sh "SHA256SUMS-vscpl1drv-can232-macos-brew" <<'SHA256SUMS_PATTERNS'
+          bash "${GITHUB_WORKSPACE//\\//}/.github/scripts/write-sha256sums.sh" "SHA256SUMS-vscpl1drv-can232-macos-brew" <<'SHA256SUMS_PATTERNS'
           artifacts/
           SHA256SUMS_PATTERNS
 
