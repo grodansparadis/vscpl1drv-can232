@@ -13,7 +13,9 @@ VSCP Level I (CANAL) driver for the [Lawicel CAN232](https://www.can232.com/) se
 
 ## Versioning
 
-Releases use calendar versioning: `YY.MM.patch` where the patch number increases with every push.
+Releases use calendar versioning: `YYYY.MM.patch`. CMake generates the year and month
+in UTC at configure time; the patch starts at `0` with the first commit of each month
+and increments with subsequent commits, so pushes automatically update package versions.
 
 ## Building
 
@@ -25,6 +27,9 @@ needs network access:
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```
+
+Run the calendar-versioning tests with `python3 tests/test_versioning.py` (requires
+Git, CMake and a C/C++ toolchain; no network access is needed).
 
 Packages (DEB/RPM/TGZ on Linux, NSIS/ZIP on Windows, TGZ on macOS) are created with:
 

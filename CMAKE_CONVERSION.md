@@ -194,13 +194,9 @@ sudo cmake --install build --prefix /var/lib/vscp
 
 ## Backward Compatibility
 
-The original Autotools infrastructure remains intact:
-- configure.ac
-- Makefile.in
-- m4/ directory
-- autotools/ directory
-
-These are not used by CMake but are preserved for reference. They can be removed in a future cleanup if desired.
+The obsolete Autotools helper scripts and generated Linux Makefiles have been removed.
+The project is built with CMake; legacy packaging files under `debian_orig/` are not
+part of the CMake build.
 
 ## What's Next?
 
@@ -218,10 +214,8 @@ These are not used by CMake but are preserved for reference. They can be removed
 
 4. **Update CI/CD pipelines** to use new CMake commands
 
-5. **Remove Autotools files** (optional, after stabilization):
-   ```bash
-   rm -rf configure.ac m4/ autotools/ Makefile.in linux/Makefile.in
-   ```
+5. **Autotools cleanup is complete:** the unused helper scripts and generated Linux
+   Makefiles have been removed.
 
 ## Support & Troubleshooting
 

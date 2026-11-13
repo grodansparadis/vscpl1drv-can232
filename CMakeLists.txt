@@ -1,22 +1,22 @@
 cmake_minimum_required(VERSION 3.16)
 
-# Calendar versioning: YY.MM.patch
-# Year/month are taken from the build date; patch is the git commit
-# count so all three parts refresh on every push.
-string(TIMESTAMP MAJOR_VERSION "%y")
-string(TIMESTAMP MINOR_VERSION "%m")
+# Calendar versioning: YYYY.MM.patch; the first commit in each month is patch 0.
+string(TIMESTAMP MAJOR_VERSION "%Y" UTC)
+string(TIMESTAMP MINOR_VERSION "%m" UTC)
+string(TIMESTAMP MONTH_START "%Y-%m-01" UTC)
 
 find_package(Git QUIET)
+set(RELEASE_VERSION "0")
 if(GIT_EXECUTABLE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
     execute_process(
-        COMMAND "${GIT_EXECUTABLE}" rev-list --count HEAD
+        COMMAND "${GIT_EXECUTABLE}" rev-list --count "--since=${MONTH_START}T00:00:00Z" HEAD
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        OUTPUT_VARIABLE RELEASE_VERSION
+        OUTPUT_VARIABLE MONTH_COMMIT_COUNT
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET)
-endif()
-if(NOT RELEASE_VERSION)
-    set(RELEASE_VERSION "0")
+    if(MONTH_COMMIT_COUNT MATCHES "^[0-9]+$" AND MONTH_COMMIT_COUNT GREATER 0)
+        math(EXPR RELEASE_VERSION "${MONTH_COMMIT_COUNT} - 1")
+    endif()
 endif()
 set(BUILD_VERSION "0")
 
