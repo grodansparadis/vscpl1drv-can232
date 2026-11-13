@@ -56,9 +56,20 @@ jobs:
           cp build/*.sha256 artifacts/ 2>/dev/null || true
           ls -lah artifacts
 
+      - name: Write SHA256SUMS
+        id: sha256sums_60
+        continue-on-error: true
+        shell: bash
+        run: |
+          bash .github/scripts/write-sha256sums.sh "SHA256SUMS-vscpl1drv-can232-rpi-arm64-packages" <<'SHA256SUMS_PATTERNS'
+          artifacts/
+          SHA256SUMS_PATTERNS
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: vscpl1drv-can232-rpi-arm64-packages
-          path: artifacts/
+          path: |
+            artifacts/
+            ${{ steps.sha256sums_60.outputs.file }}
           retention-days: 30

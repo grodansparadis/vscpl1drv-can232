@@ -141,9 +141,20 @@ jobs:
           Write-Host "Final artifacts:"
           $artifactFiles | ForEach-Object { Write-Host " - $($_.Name)" }
 
+      - name: Write SHA256SUMS
+        id: sha256sums_145
+        continue-on-error: true
+        shell: bash
+        run: |
+          bash .github/scripts/write-sha256sums.sh "SHA256SUMS-vscpl1drv-can232-windows-packages" <<'SHA256SUMS_PATTERNS'
+          artifacts/
+          SHA256SUMS_PATTERNS
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: vscpl1drv-can232-windows-packages
-          path: artifacts/
+          path: |
+            artifacts/
+            ${{ steps.sha256sums_145.outputs.file }}
           retention-days: 30

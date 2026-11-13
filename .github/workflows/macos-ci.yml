@@ -66,9 +66,20 @@ jobs:
           done)
           ls -lah artifacts
 
+      - name: Write SHA256SUMS
+        id: sha256sums_70
+        continue-on-error: true
+        shell: bash
+        run: |
+          bash .github/scripts/write-sha256sums.sh "SHA256SUMS-vscpl1drv-can232-macos-brew" <<'SHA256SUMS_PATTERNS'
+          artifacts/
+          SHA256SUMS_PATTERNS
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: vscpl1drv-can232-macos-brew
-          path: artifacts/
+          path: |
+            artifacts/
+            ${{ steps.sha256sums_70.outputs.file }}
           retention-days: 30

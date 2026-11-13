@@ -7,6 +7,8 @@ tagged, rename **Unreleased** to the version and date, and start a new
 
 ## Unreleased
 
+- Add scripts/download-artifacts.sh to download and verify the newest CI build artifacts
+- CI writes a SHA256SUMS-<artifact> checksum file into every uploaded build artifact
 - Fixed tests (991f1aa)
 - Harden Codacy SARIF upload polling (beb9b66)
 - Fix Codacy SARIF uploads for >20 runs (772e082)
