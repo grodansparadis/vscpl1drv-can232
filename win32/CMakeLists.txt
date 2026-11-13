@@ -7,8 +7,9 @@ endif()
 
 # Set MSVC runtime library to dynamic
 if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "DynamicMDd" CACHE STRING "MSVC Runtime Library" FORCE)
-    # Use /MD for release, /MDd for debug (already set by above)
+    # /MD for release, /MDd for debug. Used since cmake_minimum_required is
+    # 3.15 or later (policy CMP0091); "DynamicMDd" is not a valid value.
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "MSVC Runtime Library" FORCE)
 endif()
 
 # Compiler flags for Windows
